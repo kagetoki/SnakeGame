@@ -45,7 +45,7 @@ module Snake =
           body = Segment (Right, 2us, Tail)}
 
     let tick snake =
-        let downTick t = if t > 0us then t - 1us else 0us
+        let downTickPerks t = if t > 0us then t - 1us else 0us
         let tickBody = Body.tick snake.direction
         let hasSpeed = snake.HasPerk Speed
         let body =
@@ -58,7 +58,7 @@ module Snake =
             then snake.headPoint |> (nextCoordinate >> nextCoordinate)
             else snake.headPoint |> nextCoordinate
         {snake with
-            perks = Map.map (fun _ -> downTick) snake.perks;
+            perks = Map.map (fun _ -> downTickPerks) snake.perks;
             body = body;
             headPoint = headPoint }
 
@@ -68,11 +68,12 @@ module Snake =
     let removePerk state perk =
         {state with perks = Map.remove perk state.perks}
 
-    let applyCommand state command =
+    let applyCommand snake command =
         match command with
-        | Move dir -> {state with direction = dir}
-        | Perk (Add perk) -> addPerk state perk
-        | Perk (Remove perk) -> removePerk state perk
+        | Move dir when dir = snake.direction.Opposite -> snake
+        | Move dir -> {snake with direction = dir}
+        | Perk (Add perk) -> addPerk snake perk
+        | Perk (Remove perk) -> removePerk snake perk
 
     let mergeCommands commands =
         let mutable moveCommand = None
