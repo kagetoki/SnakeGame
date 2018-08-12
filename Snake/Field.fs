@@ -93,11 +93,14 @@ module Field =
         let height = 20
         let cells = 
             [
-                {x = width - 1; y = height - 5; content = Exit}
+                {x = width - 1; y = height - 2; content = Exit}
                 {x = 5; y = 8; content = Food}
                 {x = 12; y = height - 4; content = Food}
                 {x = 15; y = 7; content = Food}
                 {x = 2; y = 10; content = Food}
+                {x = 6; y = 12; content = Eater}
+                {x = 8; y = 14; content = Eater}
+                {x = 7; y = 4; content = Eater}
             ] |> List.map (fun c -> (struct(c.x, c.y),c)) |> Map.ofList
 
         {

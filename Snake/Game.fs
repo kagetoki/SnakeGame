@@ -106,7 +106,6 @@ module GameField =
 module Game =
 
     let print =
-        let (timerAgent: Agent<TimerCommand, Timer>) = Game.timerAgent
         let printWithColor color (text:string) =
             let oldColor = Console.ForegroundColor
             Console.ForegroundColor <- color
@@ -123,12 +122,8 @@ module Game =
             | Food -> printWithColor ConsoleColor.Magenta "o"
 
         function
-        | Loss str as loss -> 
-            timerAgent.Post Stop
-            printfn "%A" loss
-        | Win -> 
-            timerAgent.Post Stop
-            printfn "Win"
+        | Loss str as loss -> printfn "%A" loss
+        | Win -> printfn "Win"
         | Frame field ->
             System.Console.Clear()
             for j in field.height - 1..-1..0 do
@@ -137,31 +132,30 @@ module Game =
                 Console.WriteLine()
 
     let fieldAgentFn gameState snake =
-        //printfn "Field agent: %A command recieved" snake
+        let (timerAgent: Agent<TimerCommand, Timer>) = Game.timerAgent
         let gameState =
             match gameState with
             | Frame field -> snake |> GameField.buildNextGameFrame field
-            | state -> state
+            | state -> 
+                timerAgent.Post Stop
+                state
         print gameState
         gameState
 
     let fieldAgent = Field.getStartField() |> Frame |> Mailbox.buildAgent fieldAgentFn |> Agent
 
     let snakeAgentFn snake message =
-        //printfn "Snake agent: %A command recieved" message
         let snake =
             match message with
             | Commands commands -> Snake.applyCommands snake commands
             | GrowUp -> Snake.growUp snake
             | Tick -> Snake.tick snake
         fieldAgent.Post snake
-        //printfn "Snake agent: post command to fieldAgent"
         snake
 
     let snakeAgent = Snake.getDefaultSnakeState struct(20,15) |> Mailbox.buildAgent snakeAgentFn |> Agent
 
     let commandAgentFn commands msg =
-        //printfn "Command agent: %A command recieved" msg
         match msg with
         | Cmd cmd -> cmd::commands
         | Flush ->
@@ -173,7 +167,6 @@ module Game =
     let commandAgent = [] |> Mailbox.buildAgent commandAgentFn |> Agent
 
     let timerAgentFn (timer: System.Timers.Timer) cmd =
-        // printfn "Timer agent: %A command recieved" cmd
         match cmd with
         | Start -> timer.Start()
         | Pause -> timer.Stop()
