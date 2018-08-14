@@ -46,6 +46,7 @@ let rec readCommand() =
 
 [<EntryPoint>]
 let main argv =
+    Game.timerAgent.Post <| Subscribe (fun () -> Game.fieldAgent.GetState() |> ConsoleUI.print)
     Game.timerAgent.Post Start
 
     readCommand()

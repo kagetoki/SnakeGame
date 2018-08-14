@@ -1,5 +1,6 @@
 namespace SnakeGame
 
+[<RequireQualifiedAccess>]
 module Body =
     let defaultHead = Segment (Right, 2us, Tail)
 
@@ -33,6 +34,7 @@ module Body =
         | Segment(dir, len, next) -> Segment(dir, len + 1us, next)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
 module Snake =
 
     let defaultPerkTicks = 5us

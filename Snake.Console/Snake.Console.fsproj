@@ -7,6 +7,7 @@
     <ProjectReference Include="..\Snake\Snake.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleUI.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

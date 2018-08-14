@@ -1,4 +1,4 @@
-namespace rec SnakeGame
+namespace SnakeGame
 
 open System
 open System.Timers
@@ -17,6 +17,7 @@ type TimerCommand =
     | Start
     | Pause
     | Stop
+    | Subscribe of (unit -> unit)
 
 module GameField =
     let private isSnakeCrossingItself (snakeCoordinates: struct(int*int) seq) =
@@ -78,9 +79,8 @@ module GameField =
                 | SnakeCell -> if snake.HasPerk Armor then eater else nextEater
         Seq.map select nextEaters
 
-    let buildNextGameFrame field snake =
+    let buildNextGameFrame growSnakeUp field snake =
         let eaters = getNextEatersStep field snake
-        let (snakeAgent: Agent<SnakeStateMessage, SnakeState>) = Game.snakeAgent
         let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
         let isPointOutside p = Field.isPointInside struct(field.width, field.height) p |> not
         let isSnakeOutside = List.fold (fun acc point -> acc && isPointOutside point) true snakeCoordinates
@@ -96,50 +96,24 @@ module GameField =
             match cell.content with
             | Obstacle -> Loss "snake crossed obstacle"
             | Empty | SnakeCell | Exit-> buildNextFrame()
-            | Food -> snakeAgent.Post GrowUp
+            | Food -> growSnakeUp()
                       buildNextFrame()
             | Eater ->
                 if not <| snake.HasPerk AttackMode then Loss "eater ate your snake"
-                else snakeAgent.Post GrowUp
+                else growSnakeUp()
                      buildNextFrame()
 
-module Game =
-
-    let print =
-        let printWithColor color (text:string) =
-            let oldColor = Console.ForegroundColor
-            Console.ForegroundColor <- color
-            Console.Write(text)
-            Console.ForegroundColor <- oldColor
-
-        let printCell =
-            function
-            | SnakeCell -> printWithColor ConsoleColor.Green "s"
-            | Eater -> printWithColor ConsoleColor.Red "e"
-            | Obstacle -> printWithColor ConsoleColor.DarkYellow "X"
-            | Exit -> printWithColor ConsoleColor.Blue "O"
-            | Empty -> Console.Write(" ")
-            | Food -> printWithColor ConsoleColor.Magenta "o"
-
-        function
-        | Loss str as loss -> printfn "%A" loss
-        | Win -> printfn "Win"
-        | Frame field ->
-            System.Console.Clear()
-            for j in field.height - 1..-1..0 do
-                for i in 0..field.width - 1 do
-                    field.cellMap.[i,j].content |> printCell
-                Console.WriteLine()
+module rec Game =
 
     let fieldAgentFn gameState snake =
+        let (snakeAgent: Agent<SnakeStateMessage, SnakeState>) = Game.snakeAgent
         let (timerAgent: Agent<TimerCommand, Timer>) = Game.timerAgent
         let gameState =
             match gameState with
-            | Frame field -> snake |> GameField.buildNextGameFrame field
+            | Frame field -> snake |> GameField.buildNextGameFrame (fun () -> snakeAgent.Post GrowUp) field
             | state -> 
                 timerAgent.Post Stop
                 state
-        print gameState
         gameState
 
     let fieldAgent = Field.getStartField() |> Frame |> Mailbox.buildAgent fieldAgentFn |> Agent
@@ -166,11 +140,12 @@ module Game =
 
     let commandAgent = [] |> Mailbox.buildAgent commandAgentFn |> Agent
 
-    let timerAgentFn (timer: System.Timers.Timer) cmd =
+    let timerAgentFn (timer: Timer) cmd =
         match cmd with
         | Start -> timer.Start()
         | Pause -> timer.Stop()
         | Stop -> timer.Stop(); timer.Dispose()
+        | Subscribe fn -> timer.Elapsed.Add (fun x -> fn())
         timer
 
     let setUpTimer() =
