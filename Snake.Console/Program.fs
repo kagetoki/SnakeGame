@@ -2,7 +2,6 @@
 
 open System
 open SnakeGame
-open SnakeGame.Game
 open PostOffice
 
 let printSnake snake =
@@ -48,7 +47,7 @@ let rec readCommand (commandAgent: Agent<CommandMessage, Command list>) =
 [<EntryPoint>]
 let main argv =
     let system = MailboxSystem()
-    let gameSystem = Game.buildSnakeGame system ConsoleUI.print
+    let gameSystem = GameBuilder.buildSnakeGame system ConsoleUI.print
 
     gameSystem.timerAgent.Post Start
     readCommand gameSystem.commandAgent
