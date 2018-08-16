@@ -49,7 +49,8 @@ let main argv =
     let system = MailboxSystem()
     let gameSystem = GameBuilder.buildSnakeGame system ConsoleUI.print
 
+    //gameSystem.timerAgent.Post Start
     gameSystem.timerAgent.Post Start
     readCommand gameSystem.commandAgent
-    gameSystem.timerAgent.Post Stop
+    //gameSystem.timerAgent.Post Stop
     0 // return an integer exit code
