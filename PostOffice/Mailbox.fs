@@ -1,4 +1,4 @@
-namespace SnakeGame
+namespace PostOffice
 
 open Microsoft.FSharp.Control
 
@@ -29,13 +29,16 @@ module Mailbox =
 
     let getStateAsync (agent: MailboxProcessor<_>) = agent.PostAndAsyncReply Get
 
-type Agent<'msg, 'state> = Agent of MailboxProcessor<Mail<'msg, 'state>>
+type MailAgent<'msg, 'state> = MailAgent of address:string * mailbox:MailboxProcessor<Mail<'msg, 'state>>
     with member this.Post msg =
-            let (Agent this) = this
+            let (MailAgent (address,this)) = this
             Mailbox.post this msg
          member this.GetState() =
-            let (Agent this) = this
+            let (MailAgent (address,this)) = this
             Mailbox.getState this
          member this.GetStateAsync() =
-            let (Agent this) = this
+            let (MailAgent (address,this)) = this
             Mailbox.getStateAsync this
+         member this.Address =
+            let (MailAgent (address, _)) = this
+            address

@@ -6,7 +6,9 @@
     <Compile Include="Types.fs" />
     <Compile Include="Field.fs" />
     <Compile Include="SnakeState.fs" />
-    <Compile Include="Mailbox.fs" />
     <Compile Include="Game.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PostOffice\PostOffice.fsproj" />
   </ItemGroup>
 </Project>

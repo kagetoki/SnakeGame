@@ -2,6 +2,7 @@ namespace SnakeGame
 
 open System
 open System.Timers
+open PostOffice
 
 type CommandMessage =
     | Cmd of Command
@@ -18,6 +19,15 @@ type TimerCommand =
     | Pause
     | Stop
     | Subscribe of (unit -> unit)
+
+type SnakeMailboxSystem =
+    {
+        timerAgent: Agent<TimerCommand, Timer>
+        snakeAgent: Agent<SnakeStateMessage, SnakeState>
+        fieldAgent: Agent<SnakeState, GameFrame>
+        commandAgent: Agent<CommandMessage, Command list>
+        mailboxSystem: MailboxSystem
+    }
 
 module GameField =
     let private isSnakeCrossingItself (snakeCoordinates: struct(int*int) seq) =
@@ -103,22 +113,33 @@ module GameField =
                 else growSnakeUp()
                      buildNextFrame()
 
-module rec Game =
+[<RequireQualifiedAccess>]
+module Game =
 
-    let fieldAgentFn gameState snake =
-        let (snakeAgent: Agent<SnakeStateMessage, SnakeState>) = Game.snakeAgent
-        let (timerAgent: Agent<TimerCommand, Timer>) = Game.timerAgent
+    let [<Literal>] fieldAddress = "field"
+    let [<Literal>] snakeAddress = "snake"
+    let [<Literal>] commandAddress = "command"
+    let [<Literal>] timerAddress = "timer"
+
+    let snakeAgent (mailboxSystem: MailboxSystem) = mailboxSystem.Box<SnakeStateMessage, SnakeState>(snakeAddress)
+    let timerAgent (mailboxSystem: MailboxSystem) = mailboxSystem.Box<TimerCommand, Timer>(timerAddress)
+    let fieldAgent (mailboxSystem: MailboxSystem) = mailboxSystem.Box<SnakeState, GameFrame>(fieldAddress)
+    let commandAgent (mailboxSystem: MailboxSystem) = mailboxSystem.Box<CommandMessage, Command list>(commandAddress)
+
+    let fieldAgentFn (mailboxSystem: MailboxSystem) updateUi gameState snake =
+        let timerAgent = timerAgent mailboxSystem
+        let snakeAgent = snakeAgent mailboxSystem
         let gameState =
             match gameState with
             | Frame field -> snake |> GameField.buildNextGameFrame (fun () -> snakeAgent.Post GrowUp) field
             | state -> 
                 timerAgent.Post Stop
                 state
+        updateUi gameState
         gameState
 
-    let fieldAgent = Field.getStartField() |> Frame |> Mailbox.buildAgent fieldAgentFn |> Agent
-
-    let snakeAgentFn snake message =
+    let snakeAgentFn (mailboxSystem: MailboxSystem) snake message =
+        let fieldAgent = fieldAgent mailboxSystem
         let snake =
             match message with
             | Commands commands -> Snake.applyCommands snake commands
@@ -127,9 +148,8 @@ module rec Game =
         fieldAgent.Post snake
         snake
 
-    let snakeAgent = Snake.getDefaultSnakeState struct(20,15) |> Mailbox.buildAgent snakeAgentFn |> Agent
-
-    let commandAgentFn commands msg =
+    let commandAgentFn (mailboxSystem: MailboxSystem) commands msg =
+        let snakeAgent = snakeAgent mailboxSystem
         match msg with
         | Cmd cmd -> cmd::commands
         | Flush ->
@@ -137,8 +157,6 @@ module rec Game =
                 |> Commands
                 |> snakeAgent.Post
             []
-
-    let commandAgent = [] |> Mailbox.buildAgent commandAgentFn |> Agent
 
     let timerAgentFn (timer: Timer) cmd =
         match cmd with
@@ -148,13 +166,32 @@ module rec Game =
         | Subscribe fn -> timer.Elapsed.Add (fun x -> fn())
         timer
 
-    let setUpTimer() =
+    let setUpTimer (mailboxSystem: MailboxSystem) =
         let timer = new Timer()
         timer.Interval <- 500.0
         timer.Elapsed.Add (fun x ->
-            commandAgent.Post Flush;
-            snakeAgent.Post Tick;
+            (commandAgent mailboxSystem).Post Flush;
+            (snakeAgent mailboxSystem).Post Tick;
             )
         timer
 
-    let timerAgent = setUpTimer() |> Mailbox.buildAgent timerAgentFn |> Agent
+    let buildSnakeGame (mailboxSystem: MailboxSystem) updateUi =
+        let fieldAgentFn = fieldAgentFn mailboxSystem updateUi
+        let commandAgentFn = commandAgentFn mailboxSystem
+        let snakeAgentFn = snakeAgentFn mailboxSystem
+        
+        let fieldAgent = (fieldAddress, Field.getStartField() |> Frame |> Mailbox.buildAgent fieldAgentFn) |> MailAgent
+        let snakeAgent = (snakeAddress, Snake.getDefaultSnakeState struct(4, 5) |> Mailbox.buildAgent snakeAgentFn) |> MailAgent 
+        let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
+        let timerAgent = (timerAddress, setUpTimer mailboxSystem |> Mailbox.buildAgent timerAgentFn) |> MailAgent 
+        mailboxSystem.RespawnBox fieldAgent
+        mailboxSystem.RespawnBox snakeAgent
+        mailboxSystem.RespawnBox commandAgent
+        mailboxSystem.RespawnBox timerAgent
+        {
+            fieldAgent = Box fieldAgent
+            snakeAgent = Box snakeAgent
+            commandAgent = Box commandAgent
+            timerAgent = Box timerAgent
+            mailboxSystem = mailboxSystem
+        }

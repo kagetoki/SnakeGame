@@ -3,6 +3,7 @@
 open System
 open SnakeGame
 open SnakeGame.Game
+open PostOffice
 
 let printSnake snake =
     printfn "snake:\n%A" snake
@@ -13,7 +14,7 @@ let printCoordinates coordinates =
         printf "%A " c
     printfn ""
 
-let rec readCommand() =
+let rec readCommand (commandAgent: Agent<CommandMessage, Command list>) =
     let input = Console.ReadKey()
 
     match input.Key with
@@ -21,35 +22,35 @@ let rec readCommand() =
     | ConsoleKey.A ->
         Add AttackMode |> Perk |> Cmd
         |> commandAgent.Post
-        readCommand()
+        readCommand commandAgent
     | ConsoleKey.S ->
         Add Speed |> Perk |> Cmd
         |> commandAgent.Post
-        readCommand()
+        readCommand commandAgent
     | ConsoleKey.D ->
         Add Armor |> Perk |> Cmd
         |> commandAgent.Post
-        readCommand()
+        readCommand commandAgent
     | ConsoleKey.UpArrow ->
         Move Up |> Cmd |> commandAgent.Post
-        readCommand()
+        readCommand commandAgent
     | ConsoleKey.DownArrow ->
         Move Down |> Cmd |> commandAgent.Post
-        readCommand()
+        readCommand commandAgent
     | ConsoleKey.LeftArrow ->
         Move Left |> Cmd |> commandAgent.Post
-        readCommand()
+        readCommand commandAgent
     | ConsoleKey.RightArrow ->
         Move Right |> Cmd |> commandAgent.Post
-        readCommand()
-    | _ -> readCommand()
+        readCommand commandAgent
+    | _ -> readCommand commandAgent
 
 [<EntryPoint>]
 let main argv =
-    Game.timerAgent.Post <| Subscribe (fun () -> Game.fieldAgent.GetState() |> ConsoleUI.print)
-    Game.timerAgent.Post Start
+    let system = MailboxSystem()
+    let gameSystem = Game.buildSnakeGame system ConsoleUI.print
 
-    readCommand()
-    Game.timerAgent.Post Stop
-    //Console.ReadLine() |> ignore
+    gameSystem.timerAgent.Post Start
+    readCommand gameSystem.commandAgent
+    gameSystem.timerAgent.Post Stop
     0 // return an integer exit code
