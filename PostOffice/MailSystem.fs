@@ -28,7 +28,6 @@ type MailboxSystem() as this =
 
     member this.DeadLetters = deadLettersAgent()
     member this.Box<'message,'state>(address) =
-        let key = (address, typedefof<'message>, typedefof<'state>)
         match this.agentRegister.TryGetValue address with
         | (true, agent) when (agent :? MailAgent<'message,'state>) ->
             let agent = agent :?> MailAgent<'message, 'state>
