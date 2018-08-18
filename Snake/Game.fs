@@ -2,6 +2,12 @@
 
 [<RequireQualifiedAccess>]
 module Game =
+    open System
+
+    let private random = new Random()
+    let private getRandomCoordinate width height =
+        struct (random.Next(0, width - 1), random.Next(0, height - 1))
+
     let private isSnakeCrossingItself (snakeCoordinates: struct(int*int) seq) =
         let uniqueCoordinates = System.Collections.Generic.HashSet(snakeCoordinates)
         uniqueCoordinates.Count < Seq.length snakeCoordinates
@@ -35,7 +41,7 @@ module Game =
         Array2D.iteri updateCell field.cellMap
         Frame field
 
-    let private evaluateNextEaterCoordinates eaters (struct(i,j) as snakeHead) =
+    let evaluateNextEaterCoordinates eaters (struct(i,j) as snakeHead) =
         let getCloser a b =
             if b > a then b - 1
             elif b < a then b + 1
@@ -61,6 +67,15 @@ module Game =
                 | SnakeCell -> if snake.HasPerk Armor then eater else nextEater
         Seq.map select nextEaters
 
+    let private spawnFoodInRandomCell (field:field) =
+        let getRandomCoordinate() = getRandomCoordinate field.width field.height
+        let rec spawn struct(x,y) =
+            let struct (x,y) = getRandomCoordinate()
+            match field.cellMap.[x, y].content with
+            | Empty -> field.cellMap.[x, y] <- {x = x; y = y; content = Food}
+            | _ -> getRandomCoordinate() |> spawn
+        getRandomCoordinate() |> spawn
+
     let buildNextGameFrame growSnakeUp field snake =
         let eaters = getNextEatersStep field snake
         let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
@@ -79,6 +94,7 @@ module Game =
             | Obstacle -> Loss "snake crossed obstacle"
             | Empty | SnakeCell | Exit-> buildNextFrame()
             | Food -> growSnakeUp()
+                      spawnFoodInRandomCell field
                       buildNextFrame()
             | Eater ->
                 if not <| snake.HasPerk AttackMode then Loss "eater ate your snake"
