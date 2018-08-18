@@ -59,8 +59,8 @@ module ConsoleUI =
 
     let print =
         function
-        | Loss str as loss -> printfn "%A" loss
-        | Win -> printInColor ConsoleColor.Green "You Won!!!"
+        | Loss str as loss -> sprintf "%A" loss |> printInColor ConsoleColor.Red
+        | Win points -> sprintf "Congratulations! You've got %i points!" points |> printInColor ConsoleColor.Green 
         | Frame field ->
             System.Console.Clear()
             printField field

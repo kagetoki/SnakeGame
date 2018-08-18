@@ -25,7 +25,7 @@ module Game =
         Set.intersect snakeSet eaterSet
         |> Seq.length > 0
 
-    let private buildNextFrame (field:field) snake eaters =
+    let private updateCellMap (field:field) snake eaters =
         let updateCell i j cell =
             let point = struct(i,j)
             let setContent content = field.cellMap.[i,j] <- {cell with content = content}
@@ -54,8 +54,8 @@ module Game =
             else struct (getCloser i x, y)
         Seq.map (fun e -> (e, nextCoordinate e)) eaters
 
-    let private getNextEatersStep (field:field) snake =
-        let eaters = field.cellMap |> Seq.cast<Cell> |> Seq.filter (fun c -> c.content = Eater) |> Seq.map (fun c -> struct(c.x, c.y))
+    let getNextEatersStep (field:field) snake eaters=
+        //let eaters = field.cellMap |> Seq.cast<Cell> |> Seq.filter (fun c -> c.content = Eater) |> Seq.map (fun c -> struct(c.x, c.y))
         let nextEaters = evaluateNextEaterCoordinates eaters snake.headPoint
         let select ((struct(a,b) as eater), (struct(c,d) as nextEater)) =
             match field.TryGetCell nextEater with
@@ -69,34 +69,34 @@ module Game =
 
     let private spawnFoodInRandomCell (field:field) =
         let getRandomCoordinate() = getRandomCoordinate field.width field.height
-        let rec spawn struct(x,y) =
+        let rec spawn () =
             let struct (x,y) = getRandomCoordinate()
             match field.cellMap.[x, y].content with
             | Empty -> field.cellMap.[x, y] <- {x = x; y = y; content = Food}
-            | _ -> getRandomCoordinate() |> spawn
-        getRandomCoordinate() |> spawn
+            | _ -> spawn()
+        spawn()
 
-    let buildNextGameFrame growSnakeUp field snake =
-        let eaters = getNextEatersStep field snake
+    let buildNextGameFrame growSnakeUp field snake eaters =
+        //let eaters = getNextEatersStep field snake
         let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
         let isPointOutside p = Field.isPointInside struct(field.width, field.height) p |> not
         let isSnakeOutside = List.fold (fun acc point -> acc && isPointOutside point) true snakeCoordinates
-        let buildNextFrame() = buildNextFrame field snakeCoordinates eaters
+        let updateCellMap() = updateCellMap field snakeCoordinates eaters
         if isSnakeOutside
-        then Win
+        then Win snake.length
         elif isSnakeCrossingItself snakeCoordinates || isSnakeCrossedObstacle field snakeCoordinates
         then Loss "snake crossed itself or obstacle"
         else
         match field.TryGetCell snake.headPoint with
-        | None -> buildNextFrame()
+        | None -> updateCellMap()
         | Some cell ->
             match cell.content with
             | Obstacle -> Loss "snake crossed obstacle"
-            | Empty | SnakeCell | Exit-> buildNextFrame()
+            | Empty | SnakeCell | Exit-> updateCellMap()
             | Food -> growSnakeUp()
                       spawnFoodInRandomCell field
-                      buildNextFrame()
+                      updateCellMap()
             | Eater ->
                 if not <| snake.HasPerk AttackMode then Loss "eater ate your snake"
                 else growSnakeUp()
-                     buildNextFrame()
+                     updateCellMap()

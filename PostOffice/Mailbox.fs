@@ -5,12 +5,13 @@ open Microsoft.FSharp.Control
 type Mail<'msg, 'state> =
     | Post of 'msg
     | Get of AsyncReplyChannel<'state>
+    | Kill
 
 module Mailbox =
 
     let buildAgent applyMessage zeroState =
         MailboxProcessor.Start(fun inbox ->
-        let rec loop state = async{
+        let rec loop (state: 'c) = async{
             let! msg = inbox.Receive()
             match msg with
             | Post msg ->
@@ -19,11 +20,14 @@ module Mailbox =
             | Get channel ->
                 channel.Reply state
                 return! loop state
+            | Kill -> return ()
         }
         loop zeroState
         )
 
     let post (agent: MailboxProcessor<_>) msg = Post msg |> agent.Post
+
+    let kill (agent: MailboxProcessor<_>) = agent.Post Kill
 
     let getState (agent: MailboxProcessor<_>) = agent.PostAndReply Get
 
@@ -39,6 +43,9 @@ type MailAgent<'msg, 'state> = MailAgent of address:string * mailbox:MailboxProc
          member this.GetStateAsync() =
             let (MailAgent (address,this)) = this
             Mailbox.getStateAsync this
+         member this.Kill() =
+            let (MailAgent (address,this)) = this
+            Mailbox.kill this
          member this.Address =
             let (MailAgent (address, _)) = this
             address

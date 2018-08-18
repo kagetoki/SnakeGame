@@ -9,6 +9,10 @@ type Agent<'message,'state> =
             match this with
             | Box box -> box.Post msg
             | DeadBox (address, deadbox) -> (address, box msg) |> deadbox.Post
+         member this.Kill() =
+            match this with
+            | Box b -> b.Kill()
+            | DeadBox _ -> ()
 
 type MailboxSystem() as this =
 
