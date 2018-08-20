@@ -28,7 +28,6 @@ type TimerState =
 
 type GameState =
     {
-        eaters: struct(int*int) seq
         snake: SnakeState
         gameFrame: GameFrame
     }
@@ -63,11 +62,10 @@ module GameBuilder =
                 | GrowUp -> Snake.growUp gameState.snake
                 | Commands commands -> Snake.applyCommands gameState.snake commands
             let gameState = { gameState with snake = snake }
-            let eaters = gameState.eaters |> Game.getNextEatersStep field snake
-            let frame = eaters |> Game.buildNextGameFrame (fun () -> self.Post GrowUp) field gameState.snake
+            let frame = gameState.snake |> Game.buildNextGameFrame (fun () -> self.Post GrowUp) field
             timerAgent.Post Next
             updateUi frame
-            {gameState with gameFrame = frame; eaters = eaters}
+            {gameState with gameFrame = frame}
         | frame -> 
             timerAgent.Post Stop
             {gameState with gameFrame = frame}
@@ -105,13 +103,9 @@ module GameBuilder =
         let gameAgentFn = gameAgentFn mailboxSystem updateUi
 
         let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
-        let timerAgent = (timerAddress, {active = false; delay = 1000} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
+        let timerAgent = (timerAddress, {active=false; delay = 500} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
         let zeroState =
-            { 
-                gameFrame = Field.getStartField() |> Frame; 
-                snake = Snake.getDefaultSnakeState struct(4, 5)
-                eaters = seq {yield struct(16,3); }
-            }
+            { gameFrame = Field.getStartField() |> Frame; snake = Snake.getDefaultSnakeState struct(4, 5)}
         let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
 
         mailboxSystem.RespawnBox commandAgent

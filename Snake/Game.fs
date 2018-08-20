@@ -54,8 +54,8 @@ module Game =
             else struct (getCloser i x, y)
         Seq.map (fun e -> (e, nextCoordinate e)) eaters
 
-    let getNextEatersStep (field:field) snake eaters=
-        //let eaters = field.cellMap |> Seq.cast<Cell> |> Seq.filter (fun c -> c.content = Eater) |> Seq.map (fun c -> struct(c.x, c.y))
+    let private getNextEatersStep (field:field) snake =
+        let eaters = field.cellMap |> Seq.cast<Cell> |> Seq.filter (fun c -> c.content = Eater) |> Seq.map (fun c -> struct(c.x, c.y))
         let nextEaters = evaluateNextEaterCoordinates eaters snake.headPoint
         let select ((struct(a,b) as eater), (struct(c,d) as nextEater)) =
             match field.TryGetCell nextEater with
@@ -76,8 +76,8 @@ module Game =
             | _ -> spawn()
         spawn()
 
-    let buildNextGameFrame growSnakeUp field snake eaters =
-        //let eaters = getNextEatersStep field snake
+    let buildNextGameFrame growSnakeUp field snake =
+        let eaters = getNextEatersStep field snake
         let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
         let isPointOutside p = Field.isPointInside struct(field.width, field.height) p |> not
         let isSnakeOutside = List.fold (fun acc point -> acc && isPointOutside point) true snakeCoordinates
