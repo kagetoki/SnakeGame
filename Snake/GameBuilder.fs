@@ -7,11 +7,6 @@ type CommandMessage =
     | Cmd of Command
     | Flush
 
-type SnakeStateMessage =
-    | Commands of Command list
-    | GrowUp
-    | Tick
-
 [<Struct>]
 type TimerCommand =
     | Start
@@ -26,18 +21,12 @@ type TimerState =
         delay: int
     }
 
-type GameState =
-    {
-        snake: SnakeState
-        gameFrame: GameFrame
-    }
-
-type SnakeMailboxSystem =
+type SnakemailboxNetwork =
     {
         commandAgent: Agent<CommandMessage, Command list>
         timerAgent: Agent<TimerCommand, TimerState>
-        gameAgent: Agent<SnakeStateMessage, GameState>
-        mailboxSystem: MailboxSystem
+        gameAgent: Agent<Command list, GameState>
+        mailboxNetwork: MailboxNetwork
     }
 
 [<RequireQualifiedAccess>]
@@ -47,42 +36,33 @@ module GameBuilder =
     let [<Literal>] timerAddress = "timer"
     let [<Literal>] gameAddress = "game"
 
-    let commandAgent (mailboxSystem: MailboxSystem) = mailboxSystem.Box<CommandMessage, Command list>(commandAddress)
-    let timerAgent (mailboxSystem: MailboxSystem) = mailboxSystem.Box<TimerCommand, TimerState>(timerAddress)
-    let gameAgent (mailboxSystem: MailboxSystem) = mailboxSystem.Box<SnakeStateMessage, GameState>(gameAddress)
+    let commandAgent (mailboxNetwork: MailboxNetwork) = mailboxNetwork.Box<CommandMessage, Command list>(commandAddress)
+    let timerAgent (mailboxNetwork: MailboxNetwork) = mailboxNetwork.Box<TimerCommand, TimerState>(timerAddress)
+    let gameAgent (mailboxNetwork: MailboxNetwork) = mailboxNetwork.Box<Command list, GameState>(gameAddress)
 
-    let gameAgentFn (mailboxSystem: MailboxSystem) updateUi gameState cmd =
-        let timerAgent = timerAgent mailboxSystem
-        let self = gameAgent mailboxSystem
+    let gameAgentFn (mailboxNetwork: MailboxNetwork) updateUi gameState cmd =
+        let timerAgent = timerAgent mailboxNetwork
+        let self = gameAgent mailboxNetwork
         match gameState.gameFrame with
         | Frame field ->
-            let snake =
-                match cmd with
-                | Tick -> Snake.tick gameState.snake
-                | GrowUp -> Snake.growUp gameState.snake
-                | Commands commands -> Snake.applyCommands gameState.snake commands
-            let gameState = { gameState with snake = snake }
-            let frame = gameState.snake |> Game.buildNextGameFrame (fun () -> self.Post GrowUp) field
+            let gameState = Game.updateGameState gameState cmd
             timerAgent.Post Next
-            updateUi frame
-            {gameState with gameFrame = frame}
+            updateUi gameState.gameFrame
+            gameState
         | frame -> 
             timerAgent.Post Stop
-            {gameState with gameFrame = frame}
+            gameState
 
-    let commandAgentFn (mailboxSystem: MailboxSystem) commands msg =
-        let gameAgent = gameAgent mailboxSystem
+    let commandAgentFn (mailboxNetwork: MailboxNetwork) commands msg =
+        let gameAgent = gameAgent mailboxNetwork
         match msg with
         | Cmd cmd -> cmd::commands
         | Flush ->
-            commands
-                |> Commands
-                |> gameAgent.Post
-            gameAgent.Post Tick
+            commands |> gameAgent.Post
             []
 
-    let timerAgentFn (mailboxSystem: MailboxSystem) (state: TimerState) cmd =
-        let commandAgent = commandAgent mailboxSystem
+    let timerAgentFn (mailboxNetwork: MailboxNetwork) (state: TimerState) cmd =
+        let commandAgent = commandAgent mailboxNetwork
         match cmd with
         | Start -> commandAgent.Post Flush; {state with active = true}
         | Next -> 
@@ -97,23 +77,23 @@ module GameBuilder =
                 commandAgent.Post Flush
             {state with delay = delay}
 
-    let buildSnakeGame (mailboxSystem: MailboxSystem) updateUi =
-        let commandAgentFn = commandAgentFn mailboxSystem
-        let timerAgentFn = timerAgentFn mailboxSystem
-        let gameAgentFn = gameAgentFn mailboxSystem updateUi
+    let buildSnakeGame (mailboxNetwork: MailboxNetwork) updateUi =
+        let commandAgentFn = commandAgentFn mailboxNetwork
+        let timerAgentFn = timerAgentFn mailboxNetwork
+        let gameAgentFn = gameAgentFn mailboxNetwork updateUi
 
         let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
-        let timerAgent = (timerAddress, {active=false; delay = 500} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
+        let timerAgent = (timerAddress, {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
         let zeroState =
             { gameFrame = Field.getStartField() |> Frame; snake = Snake.getDefaultSnakeState struct(4, 5)}
         let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
 
-        mailboxSystem.RespawnBox commandAgent
-        mailboxSystem.RespawnBox timerAgent
-        mailboxSystem.RespawnBox gameAgent
+        mailboxNetwork.RespawnBox commandAgent
+        mailboxNetwork.RespawnBox timerAgent
+        mailboxNetwork.RespawnBox gameAgent
         {
             commandAgent = Box commandAgent
             timerAgent = Box timerAgent
             gameAgent = Box gameAgent
-            mailboxSystem = mailboxSystem
+            mailboxNetwork = mailboxNetwork
         }

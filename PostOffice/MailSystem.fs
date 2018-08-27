@@ -14,7 +14,7 @@ type Agent<'message,'state> =
             | Box b -> b.Kill()
             | DeadBox _ -> ()
 
-type MailboxSystem() as this =
+type MailboxNetwork() as this =
 
     [<DefaultValue>]
     val mutable  agentRegister: ConcurrentDictionary<string, obj>

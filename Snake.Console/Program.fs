@@ -5,7 +5,7 @@ open SnakeGame
 open PostOffice
 
 let buildGame() =
-    let system = MailboxSystem()
+    let system = MailboxNetwork()
     GameBuilder.buildSnakeGame system ConsoleUI.print
 
 let rec readCommand (snakeMailboxSystem) =
