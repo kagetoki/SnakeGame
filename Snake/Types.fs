@@ -47,3 +47,6 @@ module CollectionUtils =
          match Map.tryFind key this with
          | None -> this.Add (key,value)
          | Some _ -> this |> Map.remove key |> Map.add key value
+
+    let compareStructTuple (struct(x,y)) (struct(x1,y1)) =
+        x = x1 && y = y1

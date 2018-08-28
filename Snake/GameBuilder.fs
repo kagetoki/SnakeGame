@@ -11,6 +11,7 @@ type CommandMessage =
 type TimerCommand =
     | Start
     | Next
+    | PauseOrResume
     | Stop
     | SetDelay of int
 
@@ -42,14 +43,13 @@ module GameBuilder =
 
     let gameAgentFn (mailboxNetwork: MailboxNetwork) updateUi gameState cmd =
         let timerAgent = timerAgent mailboxNetwork
-        let self = gameAgent mailboxNetwork
         match gameState.gameFrame with
         | Frame field ->
             let gameState = Game.updateGameState gameState cmd
             timerAgent.Post Next
             updateUi gameState.gameFrame
             gameState
-        | frame -> 
+        | _ -> 
             timerAgent.Post Stop
             gameState
 
@@ -71,6 +71,10 @@ module GameBuilder =
                 commandAgent.Post Flush; 
             state
         | Stop -> printfn "Stop received"; { state with active = false }
+        | PauseOrResume -> 
+            if not state.active then
+                commandAgent.Post Flush
+            { state with active = not state.active }
         | SetDelay delay -> 
             Threading.Thread.Sleep(delay)
             if state.active then
@@ -85,7 +89,9 @@ module GameBuilder =
         let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
         let timerAgent = (timerAddress, {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
         let zeroState =
-            { gameFrame = Field.getStartField() |> Frame; snake = Snake.getDefaultSnakeState struct(4, 5)}
+            { gameFrame = Field.getStartField() |> Frame;
+              snake = Snake.getDefaultSnakeState struct(4, 5);
+              eaters = [struct(28,18);struct(14,20)] }
         let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
 
         mailboxNetwork.RespawnBox commandAgent

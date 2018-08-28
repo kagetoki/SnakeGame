@@ -37,7 +37,7 @@ module Body =
 [<RequireQualifiedAccess>]
 module Snake =
 
-    let defaultPerkTicks = 5us
+    let defaultPerkTicks = 15us
 
     let getDefaultSnakeState struct(i,j) =
         { direction = Right;

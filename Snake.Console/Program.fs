@@ -46,6 +46,9 @@ let rec readCommand (snakeMailboxSystem) =
         let newSystem = buildGame()
         newSystem.timerAgent.Post Start
         readCommand newSystem
+    | ConsoleKey.Spacebar -> 
+        snakeMailboxSystem.timerAgent.Post PauseOrResume
+        readCommand snakeMailboxSystem
     | _ -> readCommand snakeMailboxSystem
 
 

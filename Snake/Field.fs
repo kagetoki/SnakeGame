@@ -98,9 +98,6 @@ module Field =
                 {x = 12; y = height - 4; content = Food}
                 {x = 15; y = 7; content = Food}
                 {x = 2; y = 10; content = Food}
-                {x = 16; y = 13; content = Eater}
-                //{x = 8; y = 14; content = Eater}
-                //{x = 7; y = 4; content = Eater}
             ] |> List.map (fun c -> (struct(c.x, c.y),c)) |> Map.ofList
 
         {
