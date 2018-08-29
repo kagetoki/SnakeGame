@@ -63,8 +63,7 @@ module Game =
             | Some cell ->
                 match cell.content with
                 | Empty | Food -> nextEater
-                | Obstacle | Exit | Eater -> eater
-                | SnakeCell -> if snake.HasPerk Armor then eater else nextEater
+                | Obstacle | Exit | Eater | SnakeCell -> eater
         let res = List.map select nextEaters
         res
 

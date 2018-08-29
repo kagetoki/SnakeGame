@@ -24,10 +24,6 @@ let rec readCommand (snakeMailboxSystem) =
         Add Speed |> Perk |> Cmd
         |> commandAgent.Post
         readCommand snakeMailboxSystem
-    | ConsoleKey.D ->
-        Add Armor |> Perk |> Cmd
-        |> commandAgent.Post
-        readCommand snakeMailboxSystem
     | ConsoleKey.UpArrow ->
         Move Up |> Cmd |> commandAgent.Post
         readCommand snakeMailboxSystem
