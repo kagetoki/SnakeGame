@@ -42,6 +42,8 @@ type GameFrame =
 
 module Field =
 
+    let private random = new System.Random()
+
     let isPointInside struct(width, height) struct(x,y) =
         x >= 0 && x < width && y >= 0 && y < height
     let nextCoordinate dir struct(x, y) =
@@ -88,20 +90,31 @@ module Field =
             field.cellMap.[cell.x,cell.y] <- cell
         field
 
+    let private getRandomCoordinate width height =
+        struct (random.Next(1, width - 2), random.Next(1, height - 2))
+
+    let spawnFoodInRandomCell (field:field) =
+        let getRandomCoordinate() = getRandomCoordinate field.width field.height
+        let rec spawn () =
+            let struct (x,y) = getRandomCoordinate()
+            match field.cellMap.[x, y].content with
+            | Empty -> field.cellMap.[x, y] <- {x = x; y = y; content = Food}
+            | _ -> spawn()
+        spawn()
+
     let getStartField() =
         let width = 50
         let height = 20
         let cells = 
             [
                 {x = width - 1; y = height - 2; content = Exit}
-                {x = 5; y = 8; content = Food}
-                {x = 12; y = height - 4; content = Food}
-                {x = 15; y = 7; content = Food}
-                {x = 2; y = 10; content = Food}
             ] |> List.map (fun c -> (struct(c.x, c.y),c)) |> Map.ofList
-
-        {
-            width = width;
-            height = height;
-            cellMap = init width height cells
-        }
+        let field =
+            {
+                width = width;
+                height = height;
+                cellMap = init width height cells
+            }
+        for i in 0..4 do
+            spawnFoodInRandomCell field
+        field

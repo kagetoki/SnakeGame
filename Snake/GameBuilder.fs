@@ -91,7 +91,7 @@ module GameBuilder =
         let zeroState =
             { gameFrame = Field.getStartField() |> Frame;
               snake = Snake.getDefaultSnakeState struct(4, 5);
-              eaters = [struct(28,18);struct(14,20)] }
+              eaters = [struct(28,18)] }
         let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
 
         mailboxNetwork.RespawnBox commandAgent

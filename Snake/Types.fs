@@ -50,3 +50,25 @@ module CollectionUtils =
 
     let compareStructTuple (struct(x,y)) (struct(x1,y1)) =
         x = x1 && y = y1
+
+    type MaybeBuilder() =
+        member __.Bind (x,f) =
+            match x with
+            | None -> None
+            | Some x -> f x
+        member __.Return x = Some x
+        member __.ReturnFrom x = x
+
+    let maybe = MaybeBuilder()
+
+    type OrElseBuilder() =
+        member this.ReturnFrom(x) = x
+        member this.Combine (a,b) = 
+            match a with
+            | Some _ -> a
+            | None -> b
+        member this.Delay(f) = f()
+
+    let orElse = new OrElseBuilder()
+
+

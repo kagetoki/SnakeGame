@@ -9,11 +9,6 @@ type GameState =
 
 [<RequireQualifiedAccess>]
 module Game =
-    open System
-
-    let private random = new Random()
-    let private getRandomCoordinate width height =
-        struct (random.Next(0, width - 1), random.Next(0, height - 1))
 
     let private isSnakeCrossingItself (snakeCoordinates: struct(int*int) seq) =
         let uniqueCoordinates = System.Collections.Generic.HashSet(snakeCoordinates)
@@ -30,7 +25,6 @@ module Game =
         let snakeSet = Set.ofSeq snakeCoordinates
         let eaterSet = Set.ofSeq eaters
         Set.intersect snakeSet eaterSet
-        //|> Seq.length > 0
 
     let private updateCellMap (field:field) eaters snake =
         let updateCell i j cell =
@@ -72,25 +66,20 @@ module Game =
                 | Obstacle | Exit | Eater -> eater
                 | SnakeCell -> if snake.HasPerk Armor then eater else nextEater
         let res = List.map select nextEaters
-        //printfn "%A" res
         res
 
-    let private spawnFoodInRandomCell (field:field) =
-        let getRandomCoordinate() = getRandomCoordinate field.width field.height
-        let rec spawn () =
-            let struct (x,y) = getRandomCoordinate()
-            match field.cellMap.[x, y].content with
-            | Empty -> field.cellMap.[x, y] <- {x = x; y = y; content = Food}
-            | _ -> spawn()
-        spawn()
-
-    let isEatersWin snakeCoordinates (snake: SnakeState) eaters =
+    let getEaterEatenBySnake (snake: SnakeState) eaters =
+        if snake.HasPerk AttackMode |> not then None
+        else
+        let nextSnakePoint = Field.nextCoordinate snake.direction.Opposite snake.headPoint
+        orElse {
+            return! Seq.tryFind (compareStructTuple snake.headPoint) eaters
+            return! Seq.tryFind (compareStructTuple nextSnakePoint) eaters
+        }
+    
+    let isEatersWin snakeCoordinates eaters =
         let eatersIntersection = getSnakeEaterIntersection snakeCoordinates eaters
         if Set.count eatersIntersection = 0 then false
-        elif snake.HasPerk Armor then false
-        elif Set.count eatersIntersection = 1 
-             && Set.contains snake.headPoint eatersIntersection
-             && snake.HasPerk AttackMode then false
         else true
 
     let updateGameState gameState commands =
@@ -100,31 +89,38 @@ module Game =
         | Frame field ->
             let isPointOutside p = Field.isPointInside struct(field.width, field.height) p |> not
             let snake = commands |> Snake.applyCommands gameState.snake |> Snake.tick
+            let eaters = getNextEatersStep field snake gameState.eaters
+            let snakeAteEater = getEaterEatenBySnake snake eaters
+            let (snake,newEaters) = 
+                match snakeAteEater with
+                | Some e -> (Snake.growUp snake, List.filter ((compareStructTuple e)>>not) eaters)
+                | None -> (snake, eaters)
             let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
             let isSnakeOutside = List.fold (fun acc point -> acc && isPointOutside point) true snakeCoordinates
-            let eaters = getNextEatersStep field snake gameState.eaters
-            let updateCellMap snakeCoordinates = updateCellMap field eaters snakeCoordinates
+
+            let updateCellMap snakeCoordinates = updateCellMap field newEaters snakeCoordinates
+
             if isSnakeOutside
-            then { gameFrame = Win snake.length; snake = snake; eaters = eaters }
+            then { gameFrame = Win snake.length; snake = snake; eaters = newEaters }
             elif isSnakeCrossingItself snakeCoordinates || isSnakeCrossedObstacle field snakeCoordinates
-            then { gameFrame = Loss "snake crossed itself or obstacle"; snake = snake; eaters = eaters}
-            elif isEatersWin snakeCoordinates snake eaters
-            then {gameFrame = Loss "eater eate your snake"; snake = snake; eaters = eaters}
+            then { gameFrame = Loss "snake crossed itself or obstacle"; snake = snake; eaters = newEaters}
+            elif isEatersWin snakeCoordinates newEaters
+            then {gameFrame = Loss "eater ate your snake"; snake = snake; eaters = newEaters}
             else
             match field.TryGetCell snake.headPoint with
-            | None -> { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = eaters}
+            | None -> { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = newEaters}
             | Some cell ->
                 match cell.content with
-                | Obstacle -> { gameFrame = Loss "snake crossed obstacle"; snake = snake ; eaters = eaters}
-                | Empty | SnakeCell | Exit-> { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = eaters}
+                | Obstacle -> { gameFrame = Loss "snake crossed obstacle"; snake = snake ; eaters = newEaters}
+                | Empty | SnakeCell | Exit-> { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = newEaters}
                 | Food -> let snake = Snake.growUp snake
                           let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
-                          spawnFoodInRandomCell field
-                          { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = eaters}
+                          Field.spawnFoodInRandomCell field
+                          { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = newEaters}
                 | Eater ->
                     let snake = Snake.growUp snake
                     let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
-                    let eaters = List.filter (compareStructTuple snake.headPoint) eaters
+                    let aliveEaters = List.filter ((compareStructTuple snake.headPoint)>>not) newEaters
                     { gameFrame = updateCellMap snakeCoordinates |> Frame; 
                       snake = snake; 
-                      eaters = eaters}
+                      eaters = aliveEaters}
