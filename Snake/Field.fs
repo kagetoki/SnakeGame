@@ -106,8 +106,10 @@ module Field =
         let width = 50
         let height = 20
         let cells = 
+            {x = width - 1; y = height - 10; content = Exit}::
             [
-                {x = width - 1; y = height - 2; content = Exit}
+                for x in 14..30 do yield {x = x; y = 10; content = Obstacle}
+                for y in 5..15 do yield {x = 25; y = y; content = Obstacle}
             ] |> List.map (fun c -> (struct(c.x, c.y),c)) |> Map.ofList
         let field =
             {

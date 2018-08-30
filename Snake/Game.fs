@@ -9,6 +9,7 @@ type GameState =
 
 [<RequireQualifiedAccess>]
 module Game =
+    open System
 
     let private isSnakeCrossingItself (snakeCoordinates: struct(int*int) seq) =
         let uniqueCoordinates = System.Collections.Generic.HashSet(snakeCoordinates)
@@ -51,7 +52,7 @@ module Game =
             if eater = snakeHead then eater
             elif x = i then struct (x, getCloser j y)
             elif y = j then struct (getCloser i x, j)
-            elif x % 2 = 0 then struct(x, getCloser j y)
+            elif DateTimeOffset.UtcNow.Second % 2 = 0 then struct(x, getCloser j y)
             else struct (getCloser i x, y)
         List.map (fun e -> (e, nextCoordinate e)) eaters
 
@@ -62,8 +63,8 @@ module Game =
             | None -> eater
             | Some cell ->
                 match cell.content with
-                | Empty | Food -> nextEater
-                | Obstacle | Exit | Eater | SnakeCell -> eater
+                | Empty | Food | SnakeCell -> nextEater
+                | Obstacle | Exit | Eater -> eater
         let res = List.map select nextEaters
         res
 
