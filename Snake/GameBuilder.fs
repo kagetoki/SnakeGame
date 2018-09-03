@@ -47,7 +47,7 @@ module GameBuilder =
         | Frame field ->
             let gameState = Game.updateGameState gameState cmd
             timerAgent.Post Next
-            updateUi gameState.gameFrame
+            updateUi gameState
             gameState
         | _ -> 
             timerAgent.Post Stop

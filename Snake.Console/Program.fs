@@ -17,7 +17,7 @@ let rec readCommand (snakeMailboxSystem) =
         snakeMailboxSystem.gameAgent.Kill()
         snakeMailboxSystem.commandAgent.Kill()
     | ConsoleKey.A ->
-        Add AttackMode |> Perk |> Cmd
+        Add Attack |> Perk |> Cmd
         |> commandAgent.Post
         readCommand snakeMailboxSystem
     | ConsoleKey.S ->

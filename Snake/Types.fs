@@ -13,7 +13,7 @@ type Direction =
 [<Struct>]
 type SnakePerk =
     | Speed
-    | AttackMode
+    | Attack
 
 type PerkCommand =
     | Add of SnakePerk

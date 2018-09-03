@@ -17,18 +17,18 @@ type Cell =
         content: CellContent
     }
 
-[<Struct>]
-type FieldInfo =
-    {
-        width:int
-        height:int
-    }
-
 type field = 
     {
         cellMap: Cell [,]
         width: int
         height: int
+        snakeStart: struct(int*int)
+        eaters: struct(int*int) seq
+        perksTtl:uint16
+        minimumWinLength: uint16
+        exitPoint: struct(int*int)
+        perksAvailabilityMap: Map<SnakePerk, uint16>
+        isExitOpen: bool
     } with member this.TryGetCell struct(i, j) =
             if i < 0 || j < 0 || i >= this.width || j >= this.height
             then None
@@ -102,11 +102,17 @@ module Field =
             | _ -> spawn()
         spawn()
 
+    let openExit (field:field) =
+        match field.TryGetCell field.exitPoint with
+        | None -> field
+        | Some cell ->
+            field.cellMap.[cell.x, cell.y] <- {cell with content = Exit}
+            {field with isExitOpen = true}
+
     let getStartField() =
         let width = 50
         let height = 20
         let cells = 
-            {x = width - 1; y = height - 10; content = Exit}::
             [
                 for x in 14..30 do yield {x = x; y = 10; content = Obstacle}
                 for y in 5..15 do yield {x = 25; y = y; content = Obstacle}
@@ -115,7 +121,14 @@ module Field =
             {
                 width = width;
                 height = height;
+                snakeStart = struct(4,5)
+                eaters = [struct(28,18)]
+                perksTtl = 4us
+                exitPoint = struct(width - 1, height - 10)
+                perksAvailabilityMap = [(Attack, 10us); (Speed, 5us)] |> Map.ofList
+                minimumWinLength = 15us
                 cellMap = init width height cells
+                isExitOpen = false
             }
         for i in 0..4 do
             spawnFoodInRandomCell field

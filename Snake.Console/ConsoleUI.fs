@@ -16,10 +16,10 @@ type PrintString =
 module ConsoleUI =
 
     let private printInColor color (text:string) =
-        let oldColor = Console.ForegroundColor
+        //let oldColor = Console.ForegroundColor
         Console.ForegroundColor <- color
         Console.Write(text)
-        Console.ForegroundColor <- oldColor
+        //Console.ForegroundColor <- oldColor
 
     let private toChar =
         function
@@ -30,16 +30,35 @@ module ConsoleUI =
         | Empty -> ' '
         | Food -> 'o'
 
-    let private toColor =
+    let private toColor (snake: SnakeState) =
+        let snakeColor =
+            if snake.HasPerk Attack then ConsoleColor.DarkRed
+            else ConsoleColor.Green
         function
-        | SnakeCell -> (ConsoleColor.Green)
+        | SnakeCell -> snakeColor
         | Eater -> (ConsoleColor.Red)
         | Obstacle -> (ConsoleColor.DarkYellow)
         | Exit -> (ConsoleColor.Blue)
         | Empty -> (ConsoleColor.Black)
         | Food -> (ConsoleColor.Magenta)
 
-    let private printField field =
+    let private printHead ((field:field), snake) =
+        let headColor = ConsoleColor.Cyan
+        let print perk threashold =
+            let pointsLeft = if threashold > snake.length then threashold - snake.length else 0us
+            match pointsLeft with
+            | 0us -> sprintf "You can use %A mode!\n\n" perk |> printInColor headColor
+            | _ ->
+                sprintf "%i untill you can use %A!\n\n" pointsLeft perk
+                |> printInColor headColor
+        Map.iter print field.perksAvailabilityMap
+        if field.minimumWinLength > snake.length then
+            sprintf "Exit will be open in %i points\n" (field.minimumWinLength - snake.length)
+            |> printInColor headColor
+
+    let private printField (field, snake) =
+        printHead (field, snake)
+        let toColor = toColor snake
         let buffer = new List<PrintString>()
         let getSymbol i j = field.cellMap.[i,j].content |> toChar
         let c = getSymbol 0 0
@@ -57,11 +76,11 @@ module ConsoleUI =
             str.stringBuilder.ToString()
             |> printInColor str.color
 
-    let print =
-        function
+    let print gameState =
+        match gameState.gameFrame with
         | Loss str as loss -> sprintf "%A\n" loss |> printInColor ConsoleColor.Red
         | Win points -> sprintf "Congratulations! You've got %i points!\n" points |> printInColor ConsoleColor.Green 
         | Frame field ->
             System.Console.Clear()
-            printField field
+            printField (field, gameState.snake)
 

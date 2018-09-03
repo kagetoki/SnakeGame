@@ -68,8 +68,8 @@ module Game =
         let res = List.map select nextEaters
         res
 
-    let getEaterEatenBySnake (snake: SnakeState) eaters =
-        if snake.HasPerk AttackMode |> not then None
+    let private getEaterEatenBySnake (snake: SnakeState) eaters =
+        if snake.HasPerk Attack |> not then None
         else
         let nextSnakePoint = Field.nextCoordinate snake.direction.Opposite snake.headPoint
         orElse {
@@ -77,16 +77,31 @@ module Game =
             return! Seq.tryFind (compareStructTuple nextSnakePoint) eaters
         }
     
-    let isEatersWin snakeCoordinates eaters =
+    let private isEatersWin snakeCoordinates eaters =
         let eatersIntersection = getSnakeEaterIntersection snakeCoordinates eaters
         if Set.count eatersIntersection = 0 then false
         else true
+
+    let private filterCommands field snake commands =
+        let predicate cmd =
+            match cmd with
+            | Perk (Add perk) -> 
+                match field.perksAvailabilityMap.TryFind perk with
+                | None -> true
+                | Some threshold -> snake.length >= threshold
+            | _ -> true
+        List.filter predicate commands
 
     let updateGameState gameState commands =
         match gameState.gameFrame with
         | Win _ -> gameState
         | Loss _ -> gameState
         | Frame field ->
+            let field =
+                if not field.isExitOpen && gameState.snake.length >= field.minimumWinLength
+                then Field.openExit field
+                else field
+            let commands = filterCommands field gameState.snake commands
             let isPointOutside p = Field.isPointInside struct(field.width, field.height) p |> not
             let snake = commands |> Snake.applyCommands gameState.snake |> Snake.tick
             let eaters = getNextEatersStep field snake gameState.eaters
