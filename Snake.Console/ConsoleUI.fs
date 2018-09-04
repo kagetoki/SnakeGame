@@ -49,15 +49,15 @@ module ConsoleUI =
             match pointsLeft with
             | 0us -> sprintf "You can use %A mode!\n\n" perk |> printInColor headColor
             | _ ->
-                sprintf "%i untill you can use %A!\n\n" pointsLeft perk
+                sprintf "%i points untill you can use %A mode!\n\n" pointsLeft perk
                 |> printInColor headColor
         Map.iter print field.perksAvailabilityMap
         if field.minimumWinLength > snake.length then
             sprintf "Exit will be open in %i points\n" (field.minimumWinLength - snake.length)
             |> printInColor headColor
 
-    let private printField (field, snake) =
-        printHead (field, snake)
+    let private printField ((field, snake) as data) =
+        printHead data
         let toColor = toColor snake
         let buffer = new List<PrintString>()
         let getSymbol i j = field.cellMap.[i,j].content |> toChar
@@ -76,10 +76,15 @@ module ConsoleUI =
             str.stringBuilder.ToString()
             |> printInColor str.color
 
-    let print gameState =
-        match gameState.gameFrame with
+    let printGameResult =
+        function
         | Loss str as loss -> sprintf "%A\n" loss |> printInColor ConsoleColor.Red
         | Win points -> sprintf "Congratulations! You've got %i points!\n" points |> printInColor ConsoleColor.Green 
+
+
+    let print gameState =
+        match gameState.gameFrame with
+        | End result -> printGameResult result
         | Frame field ->
             System.Console.Clear()
             printField (field, gameState.snake)

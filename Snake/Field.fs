@@ -34,12 +34,6 @@ type field =
             then None
             else this.cellMap.[i,j] |> Some
 
-type GameFrame =
-    | Frame of field
-    | Win of points:uint16
-    | Loss of string
-
-
 module Field =
 
     let private random = new System.Random()
