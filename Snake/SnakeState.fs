@@ -37,7 +37,7 @@ module Body =
 [<RequireQualifiedAccess>]
 module Snake =
 
-    let defaultPerkTicks = 15us
+    let defaultPerkTicks = 6us
 
     let getDefaultSnakeState struct(i,j) =
         { direction = Right;
@@ -47,7 +47,13 @@ module Snake =
           body = Segment (Right, 2us, Tail)}
 
     let tick snake =
-        let downTickPerks t = if t > 0us then t - 1us else 0us
+        let downTick t = if t > 0us then t - 1us else 0us
+        let downTickPerks perk =
+            match perk with
+            | Cooldown ticks -> downTick ticks |> Cooldown
+            | Active 0us -> Cooldown defaultPerkTicks
+            | Active ticks -> downTick ticks |> Active
+
         let tickBody = Body.tick snake.direction
         let hasSpeed = snake.HasPerk Speed
         let body =
@@ -64,11 +70,18 @@ module Snake =
             body = body;
             headPoint = headPoint }
 
-    let addPerk state perk =
-        {state with perks = state.perks.AddOrReplace (perk, defaultPerkTicks)}
+    let addPerk (snake: SnakeState) perk =
+        if snake.CanApply perk
+        then { snake with perks = snake.perks.AddOrReplace (perk, Active defaultPerkTicks)}
+        else snake
 
-    let removePerk state perk =
-        {state with perks = Map.remove perk state.perks}
+    let removePerk (snake: SnakeState) perk =
+        match snake.perks.TryFind perk with
+        | None -> snake
+        | Some perkState ->
+            match perkState with
+            | Cooldown _ -> snake
+            | Active ticks -> { snake with perks = snake.perks.AddOrReplace (perk, Cooldown (defaultPerkTicks - ticks))}
 
     let applyCommand snake command =
         match command with

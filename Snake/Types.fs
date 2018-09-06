@@ -27,17 +27,33 @@ type SnakeBody =
     | Segment of direction: Direction * length: uint16 * next: SnakeBody
     | Tail
 
+[<Struct>]
+type PerkState =
+    | Active of active:uint16
+    | Cooldown of cooldown:uint16
+
 type SnakeState =
     {
         direction: Direction
-        perks: Map<SnakePerk,uint16>
+        perks: Map<SnakePerk,PerkState>
         length: uint16
         headPoint: struct(int*int)
         body: SnakeBody
     } with member this.HasPerk perk = 
             match Map.tryFind perk this.perks with
             | None -> false
-            | Some perkTicks -> perkTicks > 0us
+            | Some perkState ->
+                match perkState with
+                | Active ticks -> ticks > 0us
+                | Cooldown _ -> false
+
+           member this.CanApply perk =
+            match Map.tryFind perk this.perks with
+            | None -> true
+            | Some perkState ->
+                match perkState with
+                | Cooldown 0us -> true
+                | _ -> false
 
 [<AutoOpen>]
 module CollectionUtils =
