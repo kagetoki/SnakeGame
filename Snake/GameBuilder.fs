@@ -88,10 +88,11 @@ module GameBuilder =
 
         let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
         let timerAgent = (timerAddress, {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
+        let eaters = [struct(20,15);struct(28,10)]
         let zeroState =
-            { gameFrame = Field.getStartField() |> Frame;
+            { gameFrame = Field.getStartField [(Attack, 6us); (Speed, 2us)] eaters |> Frame;
               snake = Snake.getDefaultSnakeState struct(4, 5);
-              eaters = [struct(28,18)] }
+              eaters = eaters }
         let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
 
         mailboxNetwork.RespawnBox commandAgent

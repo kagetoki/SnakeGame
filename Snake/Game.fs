@@ -140,20 +140,24 @@ module Game =
             match tryEndGame field snakeCoordinates newEaters with
             | Some result -> {gameState with gameFrame = End result}
             | None ->
+            let nextFrame snake field = { gameFrame = Frame field; snake = snake; eaters = newEaters }
             match field.TryGetCell snake.headPoint with
-            | None -> { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = newEaters}
+            | None -> updateCellMap snakeCoordinates |> nextFrame snake
             | Some cell ->
                 match cell.content with
-                | Obstacle -> { gameFrame = Loss "snake crossed obstacle" |> End; snake = snake ; eaters = newEaters}
-                | Empty | SnakeCell | Exit-> { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = newEaters}
-                | Food -> let snake = Snake.growUp snake
-                          let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
-                          Field.spawnFoodInRandomCell field
-                          { gameFrame = updateCellMap snakeCoordinates |> Frame; snake = snake; eaters = newEaters}
+                | Obstacle ->
+                    { gameFrame = Loss "snake crossed obstacle" |> End; snake = snake ; eaters = newEaters }
+                | Empty | SnakeCell | Exit ->
+                    updateCellMap snakeCoordinates |> nextFrame snake
+                | Food -> 
+                    let snake = Snake.growUp snake
+                    let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
+                    Field.spawnFoodInRandomCell field
+                    updateCellMap snakeCoordinates |> nextFrame snake
                 | Eater ->
                     let snake = Snake.growUp snake
                     let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
                     let aliveEaters = List.filter ((compareStructTuple snake.headPoint)>>not) newEaters
                     { gameFrame = updateCellMap snakeCoordinates |> Frame; 
                       snake = snake; 
-                      eaters = aliveEaters}
+                      eaters = aliveEaters }
