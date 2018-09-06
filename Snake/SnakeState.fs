@@ -1,4 +1,4 @@
-namespace SnakeGame
+namespace SneakySnake
 
 [<RequireQualifiedAccess>]
 module Body =

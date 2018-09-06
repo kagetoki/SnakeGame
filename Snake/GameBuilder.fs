@@ -1,4 +1,4 @@
-namespace SnakeGame
+namespace SneakySnake
 
 open System
 open PostOffice

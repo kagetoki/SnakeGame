@@ -1,4 +1,4 @@
-﻿namespace SnakeGame
+﻿namespace SneakySnake
 
 open System
 open System.Text
@@ -15,11 +15,29 @@ type PrintString =
 [<RequireQualifiedAccess>]
 module ConsoleUI =
 
+    let [<Literal>] Help = """
+    Use arrow keys to direct your snake
+    
+    To enable speed mode press 'S' key
+
+    To enable attack mode (so you can eat the eaters) press 'A'
+
+    To disable those modes and safe some cooldown time press
+    the same key, but with 'Shift' modifier.
+
+    Oh yes, the eaters. Beware of them (red 'e') and don't let them bite you!
+
+    Once you reach the certain length the exit will be open.
+    Look for a blue 'O' symbol and get there to win the game!
+
+    Press 'R' to restart the game, 'Q' to quit and Spacebar to pause/resume
+
+    Good luck and press any key to begin the game!
+    """
+
     let private printInColor color (text:string) =
-        //let oldColor = Console.ForegroundColor
         Console.ForegroundColor <- color
         Console.Write(text)
-        //Console.ForegroundColor <- oldColor
 
     let private toChar =
         function
@@ -79,8 +97,7 @@ module ConsoleUI =
     let printGameResult =
         function
         | Loss str as loss -> sprintf "%A\n" loss |> printInColor ConsoleColor.Red
-        | Win points -> sprintf "Congratulations! You've got %i points!\n" points |> printInColor ConsoleColor.Green 
-
+        | Win points -> sprintf "Congratulations! You've got %i points!\n" points |> printInColor ConsoleColor.Green
 
     let print gameState =
         match gameState.gameFrame with
@@ -89,3 +106,6 @@ module ConsoleUI =
             System.Console.Clear()
             printField (field, gameState.snake)
 
+    let printHelp() =
+        printInColor ConsoleColor.Cyan Help
+        Console.ReadKey() |> ignore

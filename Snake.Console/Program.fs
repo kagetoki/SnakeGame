@@ -1,7 +1,7 @@
 ﻿// Learn more about F# at http://fsharp.org
 
 open System
-open SnakeGame
+open SneakySnake
 open PostOffice
 
 let buildGame() =
@@ -11,17 +11,20 @@ let buildGame() =
 let rec readCommand (snakeMailboxSystem) =
     let commandAgent = snakeMailboxSystem.commandAgent
     let input = Console.ReadKey()
-
+    let perkCommand = 
+        if input.Modifiers.HasFlag ConsoleModifiers.Shift
+        then Remove
+        else Add
     match input.Key with
     | ConsoleKey.Q -> 
         snakeMailboxSystem.gameAgent.Kill()
         snakeMailboxSystem.commandAgent.Kill()
     | ConsoleKey.A ->
-        Add Attack |> Perk |> Cmd
+        perkCommand Attack |> Perk |> Cmd
         |> commandAgent.Post
         readCommand snakeMailboxSystem
     | ConsoleKey.S ->
-        Add Speed |> Perk |> Cmd
+        perkCommand Speed |> Perk |> Cmd
         |> commandAgent.Post
         readCommand snakeMailboxSystem
     | ConsoleKey.UpArrow ->
@@ -47,12 +50,10 @@ let rec readCommand (snakeMailboxSystem) =
         readCommand snakeMailboxSystem
     | _ -> readCommand snakeMailboxSystem
 
-
-
 [<EntryPoint>]
 let main argv =
     let gameSystem = buildGame()
-
+    ConsoleUI.printHelp()
     gameSystem.timerAgent.Post Start
     readCommand gameSystem
     0 // return an integer exit code
