@@ -49,6 +49,9 @@ module GameBuilder =
             timerAgent.Post Next
             updateUi gameState
             gameState
+        | End (Win _) ->
+            timerAgent.Post PauseOrResume
+            Game.updateGameState gameState cmd
         | _ -> 
             timerAgent.Post Stop
             gameState
@@ -88,11 +91,12 @@ module GameBuilder =
 
         let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
         let timerAgent = (timerAddress, {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
-        let eaters = [struct(20,15);struct(28,10)]
+        let levels = LevelSource.loadAllLevels() |> List.ofArray
         let zeroState =
-            { gameFrame = Field.getStartField [(Attack, 6us); (Speed, 2us)] eaters |> Frame;
-              snake = Snake.getDefaultSnakeState struct(4, 5);
-              eaters = eaters }
+            { gameFrame = Frame levels.Head;
+              snake = Snake.getDefaultSnakeState levels.Head.snakeStart;
+              eaters = levels.Head.eaters |> List.ofSeq 
+              nextLevels = levels.Tail }
         let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
 
         mailboxNetwork.RespawnBox commandAgent

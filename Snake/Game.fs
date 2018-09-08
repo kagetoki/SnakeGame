@@ -14,6 +14,7 @@ type GameState =
         snake: SnakeState
         gameFrame: GameFrame
         eaters: struct(int*int) list
+        nextLevels: field list
     }
 
 [<RequireQualifiedAccess>]
@@ -123,6 +124,14 @@ module Game =
 
     let updateGameState gameState commands =
         match gameState.gameFrame with
+        | End (Win _) ->
+            match gameState.nextLevels with
+            | [] -> gameState
+            | next::tail ->
+              { nextLevels = tail
+                gameFrame = Frame next
+                snake = Snake.getDefaultSnakeState next.snakeStart
+                eaters = next.eaters |> List.ofSeq }
         | End _ -> gameState
         | Frame field ->
             let field = openExitIfNeeded field gameState.snake
@@ -142,13 +151,13 @@ module Game =
             match tryEndGame field snakeCoordinates newEaters with
             | Some result -> {gameState with gameFrame = End result}
             | None ->
-            let nextFrame snake field = { gameFrame = Frame field; snake = snake; eaters = newEaters }
+            let nextFrame snake field = { gameState with gameFrame = Frame field; snake = snake; eaters = newEaters }
             match field.TryGetCell snake.headPoint with
             | None -> updateCellMap snakeCoordinates |> nextFrame snake
             | Some cell ->
                 match cell.content with
                 | Obstacle ->
-                    { gameFrame = Loss "snake crossed obstacle" |> End; snake = snake ; eaters = newEaters }
+                    { gameState with  gameFrame = Loss "snake crossed obstacle" |> End; snake = snake ; eaters = newEaters }
                 | Empty | SnakeCell | Exit ->
                     updateCellMap snakeCoordinates |> nextFrame snake
                 | Food -> 
@@ -160,6 +169,7 @@ module Game =
                     let snake = Snake.growUp snake
                     let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
                     let aliveEaters = List.filter ((areEqualStructTuples snake.headPoint)>>not) newEaters
-                    { gameFrame = updateCellMap snakeCoordinates |> Frame; 
-                      snake = snake; 
-                      eaters = aliveEaters }
+                    { gameState with 
+                          gameFrame = updateCellMap snakeCoordinates |> Frame; 
+                          snake = snake; 
+                          eaters = aliveEaters }

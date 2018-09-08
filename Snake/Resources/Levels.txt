@@ -1,0 +1,107 @@
+﻿{
+  "snakeStart": {
+    "Item1": 4,
+    "Item2": 5
+  },
+  "eaters": [
+    {
+      "Item1": 15,
+      "Item2": 10
+    },
+    {
+      "Item1": 23,
+      "Item2": 16
+    }
+  ],
+  "perksTtl": 6,
+  "minimumWinLength": 10,
+  "exitPoint": {
+    "Item1": 49,
+    "Item2": 10
+  },
+  "perksMap": [
+    {
+      "Item1": "Attack",
+      "Item2": 6
+    },
+    {
+      "Item1": "Speed",
+      "Item2": 3
+    }
+  ]
+}
+@
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X                                                X
+X                                                X
+X                                                X
+X            X                       X           X
+X            X                       X           X
+X            X                       X           X
+X            X                       X           X
+X            X                       X           X
+X            X                       X           X
+X            XXXXXXXXXXX  XXXXXXXXXXXX           X
+X            X                       X           X
+X            X                       X           X
+X            X                       X           X
+X            X                       X           X
+X            X                       X           X
+X                                                X
+X                                                X
+X                                                X
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+###
+{
+  "snakeStart": {
+    "Item1": 4,
+    "Item2": 5
+  },
+  "eaters": [
+    {
+      "Item1": 15,
+      "Item2": 10
+    },
+    {
+      "Item1": 23,
+      "Item2": 6
+    }
+  ],
+  "perksTtl": 6,
+  "minimumWinLength": 15,
+  "exitPoint": {
+    "Item1": 49,
+    "Item2": 10
+  },
+  "perksMap": [
+    {
+      "Item1": "Attack",
+      "Item2": 6
+    },
+    {
+      "Item1": "Speed",
+      "Item2": 3
+    }
+  ]
+}
+@
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X                                                X
+X                                                X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X       XXXXXXXXXXX            XXXXXXXXXXXX      X
+X                                                X
+X                                                X
+X       XXXXXXXXXXX            XXXXXXXXXXXX      X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X                                                X
+X                                                X
+X                                                X
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
