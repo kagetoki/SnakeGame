@@ -72,7 +72,9 @@ module Game =
             | None -> eater
             | Some cell ->
                 match cell.content with
-                | Empty | Food | SnakeCell -> nextEater
+                | Empty | Food | SnakeCell -> 
+                    let otherCandidates = List.filter (fun (_, n) -> areEqualStructTuples n nextEater) nextEaters |> List.length
+                    if otherCandidates > 1 then eater else nextEater
                 | Obstacle | Exit | Eater -> eater
         let res = List.map select nextEaters
         res
@@ -82,8 +84,8 @@ module Game =
         else
         let nextSnakePoint = Field.nextCoordinate snake.direction.Opposite snake.headPoint
         orElse {
-            return! Seq.tryFind (compareStructTuple snake.headPoint) eaters
-            return! Seq.tryFind (compareStructTuple nextSnakePoint) eaters
+            return! Seq.tryFind (areEqualStructTuples snake.headPoint) eaters
+            return! Seq.tryFind (areEqualStructTuples nextSnakePoint) eaters
         }
 
     let private isEatersWin snakeCoordinates eaters =
@@ -130,7 +132,7 @@ module Game =
             let snakeAteEater = getEaterEatenBySnake snake eaters
             let (snake,newEaters) = 
                 match snakeAteEater with
-                | Some e -> (Snake.growUp snake, List.filter ((compareStructTuple e)>>not) eaters)
+                | Some e -> (Snake.growUp snake, List.filter ((areEqualStructTuples e)>>not) eaters)
                 | None -> (snake, eaters)
 
             let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
@@ -157,7 +159,7 @@ module Game =
                 | Eater ->
                     let snake = Snake.growUp snake
                     let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
-                    let aliveEaters = List.filter ((compareStructTuple snake.headPoint)>>not) newEaters
+                    let aliveEaters = List.filter ((areEqualStructTuples snake.headPoint)>>not) newEaters
                     { gameFrame = updateCellMap snakeCoordinates |> Frame; 
                       snake = snake; 
                       eaters = aliveEaters }

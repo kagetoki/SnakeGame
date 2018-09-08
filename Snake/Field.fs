@@ -108,8 +108,10 @@ module Field =
         let height = 20
         let cells = 
             [
-                for x in 14..30 do yield {x = x; y = 10; content = Obstacle}
-                for y in 5..15 do yield {x = 25; y = y; content = Obstacle}
+                for x in 14..23 do yield {x = x; y = 9; content = Obstacle}
+                for x in 26..36 do yield {x = x; y = 9; content = Obstacle}
+                for y in 4..15 do yield {x = 13; y = y; content = Obstacle}
+                for y in 4..15 do yield {x = 37; y = y; content = Obstacle}
             ] |> List.map (fun c -> (struct(c.x, c.y),c)) |> Map.ofList
         let field =
             {
