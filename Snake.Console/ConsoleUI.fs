@@ -34,6 +34,11 @@ module ConsoleUI =
 
     Good luck and press any key to begin the game!
     """
+    do Console.OutputEncoding <- System.Text.Encoding.UTF8
+
+    let snakeBodyChar = char 169
+    let snakeHeadChar = char 232
+    let foodSymbol = char 230
 
     let private printInColor color (text:string) =
         Console.ForegroundColor <- color
@@ -41,16 +46,17 @@ module ConsoleUI =
 
     let private toChar =
         function
-        | SnakeCell -> 's'
+        | SnakeCell -> snakeBodyChar
         | Eater -> 'e'
         | Obstacle -> 'X'
         | Exit -> 'O'
         | Empty -> ' '
-        | Food -> 'o'
+        | Food -> foodSymbol
 
     let private toColor (snake: SnakeState) =
         let snakeColor =
             if snake.HasPerk Attack then ConsoleColor.DarkRed
+            elif snake.HasPerk Speed then ConsoleColor.Cyan
             else ConsoleColor.Green
         function
         | SnakeCell -> snakeColor
@@ -84,7 +90,7 @@ module ConsoleUI =
         for j in field.height - 1..-1..0 do
             for i in 0..field.width - 1 do
                 let content = field.cellMap.[i,j].content
-                let symbol = toChar content
+                let symbol = if snake.headPoint = struct(i,j) then snakeHeadChar else toChar content
                 if buffer.Last().symbol = symbol || symbol = ' ' then
                     buffer.Last().stringBuilder.Append symbol |> ignore
                 else buffer.Add({symbol = symbol; stringBuilder = StringBuilder().Append(symbol); color = toColor content})
