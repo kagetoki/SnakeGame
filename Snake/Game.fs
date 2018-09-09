@@ -15,6 +15,7 @@ type GameState =
         gameFrame: GameFrame
         eaters: struct(int*int) list
         nextLevels: field list
+        startLevel: int
     }
 
 [<RequireQualifiedAccess>]
@@ -131,6 +132,7 @@ module Game =
               { nextLevels = tail
                 gameFrame = Frame next
                 snake = Snake.getDefaultSnakeState next.snakeStart
+                startLevel = gameState.startLevel + 1
                 eaters = next.eaters |> List.ofSeq }
         | End _ -> gameState
         | Frame field ->

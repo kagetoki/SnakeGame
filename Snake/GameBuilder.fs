@@ -84,18 +84,19 @@ module GameBuilder =
                 commandAgent.Post Flush
             {state with delay = delay}
 
-    let buildSnakeGame (mailboxNetwork: MailboxNetwork) updateUi =
+    let buildSnakeGame (mailboxNetwork: MailboxNetwork) updateUi startLevel =
         let commandAgentFn = commandAgentFn mailboxNetwork
         let timerAgentFn = timerAgentFn mailboxNetwork
         let gameAgentFn = gameAgentFn mailboxNetwork updateUi
 
         let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
         let timerAgent = (timerAddress, {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
-        let levels = LevelSource.loadAllLevels() |> List.ofArray
+        let levels = LevelSource.loadAllLevels() |> List.ofArray |> List.skip startLevel
         let zeroState =
             { gameFrame = Frame levels.Head;
               snake = Snake.getDefaultSnakeState levels.Head.snakeStart;
               eaters = levels.Head.eaters |> List.ofSeq 
+              startLevel = startLevel
               nextLevels = levels.Tail }
         let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
 

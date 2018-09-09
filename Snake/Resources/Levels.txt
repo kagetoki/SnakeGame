@@ -14,7 +14,7 @@
     }
   ],
   "perksTtl": 6,
-  "minimumWinLength": 10,
+  "minimumWinLength": 5,
   "exitPoint": {
     "Item1": 49,
     "Item2": 10
@@ -35,8 +35,8 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X                                                X
 X                                                X
 X                                                X
-X            X                       X           X
-X            X                       X           X
+X            X        XXXXXXX        X           X
+X            X      XXX     XXX      X           X
 X            X                       X           X
 X            X                       X           X
 X            X                       X           X
@@ -45,8 +45,62 @@ X            XXXXXXXXXXX  XXXXXXXXXXXX           X
 X            X                       X           X
 X            X                       X           X
 X            X                       X           X
-X            X                       X           X
-X            X                       X           X
+X            X      XXX     XXX      X           X
+X            X        XXXXXXX        X           X
+X                                                X
+X                                                X
+X                                                X
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+###
+{
+  "snakeStart": {
+    "Item1": 4,
+    "Item2": 5
+  },
+  "eaters": [
+    {
+      "Item1": 35,
+      "Item2": 16
+    },
+    {
+      "Item1": 33,
+      "Item2": 6
+    }
+  ],
+  "perksTtl": 6,
+  "minimumWinLength": 15,
+  "exitPoint": {
+    "Item1": 49,
+    "Item2": 10
+  },
+  "perksMap": [
+    {
+      "Item1": "Attack",
+      "Item2": 10
+    },
+    {
+      "Item1": "Speed",
+      "Item2": 6
+    }
+  ]
+}
+@
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X                                                X
+X                                                X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X       XXXXXXXXXXX            XXXXXXXXXXXX      X
+X                                                X
+X                                                X
+X       XXXXXXXXXXX            XXXXXXXXXXXX      X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
+X                 X            X                 X
 X                                                X
 X                                                X
 X                                                X
@@ -71,16 +125,16 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   "minimumWinLength": 15,
   "exitPoint": {
     "Item1": 49,
-    "Item2": 10
+    "Item2": 17
   },
   "perksMap": [
     {
       "Item1": "Attack",
-      "Item2": 6
+      "Item2": 15
     },
     {
       "Item1": "Speed",
-      "Item2": 3
+      "Item2": 7
     }
   ]
 }
@@ -91,14 +145,14 @@ X                                                X
 X                 X            X                 X
 X                 X            X                 X
 X                 X            X                 X
-X                 X            X                 X
-X                 X            X                 X
-X       XXXXXXXXXXX            XXXXXXXXXXXX      X
-X                                                X
-X                                                X
-X       XXXXXXXXXXX            XXXXXXXXXXXX      X
-X                 X            X                 X
-X                 X            X                 X
+X            XXXXXX            XXXXXX            X
+X            X                      X            X
+X       XXXXXX       XXXXXXXX       XXXXXXX      X
+X                           X                    X
+X                           X                    X
+X       XXXXXX       XXXXXXXX       XXXXXXX      X
+X            X                      X            X
+X            XXXXXX            XXXXXX            X
 X                 X            X                 X
 X                 X            X                 X
 X                                                X

@@ -4,9 +4,9 @@ open System
 open SneakySnake
 open PostOffice
 
-let buildGame() =
+let buildGame startLevel =
     let system = MailboxNetwork()
-    GameBuilder.buildSnakeGame system ConsoleUI.print
+    GameBuilder.buildSnakeGame system ConsoleUI.print startLevel
 
 let rec readCommand (snakeMailboxSystem) =
     let commandAgent = snakeMailboxSystem.commandAgent
@@ -40,9 +40,14 @@ let rec readCommand (snakeMailboxSystem) =
         Move Right |> Cmd |> commandAgent.Post
         readCommand snakeMailboxSystem
     | ConsoleKey.R -> 
+        let startLevel =
+            match snakeMailboxSystem.gameAgent with
+            | Box m ->
+                m.GetState().startLevel
+            | _ -> 0
         commandAgent.Kill()
         snakeMailboxSystem.gameAgent.Kill()
-        let newSystem = buildGame()
+        let newSystem = buildGame startLevel
         newSystem.timerAgent.Post Start
         readCommand newSystem
     | ConsoleKey.Spacebar -> 
@@ -52,7 +57,7 @@ let rec readCommand (snakeMailboxSystem) =
 
 [<EntryPoint>]
 let main argv =
-    let gameSystem = buildGame()
+    let gameSystem = buildGame 0
     ConsoleUI.printHelp()
     gameSystem.timerAgent.Post Start
     readCommand gameSystem

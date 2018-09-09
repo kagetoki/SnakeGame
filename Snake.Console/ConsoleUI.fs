@@ -103,7 +103,9 @@ module ConsoleUI =
     let printGameResult =
         function
         | Loss str as loss -> sprintf "%A\n" loss |> printInColor ConsoleColor.Red
-        | Win points -> sprintf "Congratulations! You've got %i points!\n" points |> printInColor ConsoleColor.Green
+        | Win points ->
+            sprintf "Congratulations! You've got %i points!\nPress space to get to next level" points
+            |> printInColor ConsoleColor.Green
 
     let print gameState =
         match gameState.gameFrame with
