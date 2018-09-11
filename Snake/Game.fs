@@ -74,7 +74,8 @@ module Game =
             | None -> eater
             | Some cell ->
                 match cell.content with
-                | Empty | Food | SnakeCell -> 
+                | Empty | Food | SnakeCell ->
+                    if cell.content = Food then Field.spawnFoodInRandomCell field
                     let otherCandidates = List.filter (fun (_, n) -> areEqualStructTuples n nextEater) nextEaters |> List.length
                     if otherCandidates > 1 then eater else nextEater
                 | Obstacle | Exit | Eater -> eater
@@ -123,6 +124,12 @@ module Game =
         then Loss "eater ate your snake" |> Some
         else None
 
+    let rec private eatEaters (snake,eaters) =
+        let snakeAteEater = getEaterEatenBySnake snake eaters
+        match snakeAteEater with
+        | Some e -> (Snake.growUp snake, List.filter ((areEqualStructTuples e)>>not) eaters) |> eatEaters
+        | None -> (snake, eaters)
+
     let updateGameState gameState commands =
         match gameState.gameFrame with
         | End (Win _) ->
@@ -140,11 +147,7 @@ module Game =
             let commands = filterCommands field gameState.snake commands
             let snake = commands |> Snake.applyCommands gameState.snake |> Snake.tick
             let eaters = getNextEatersStep field snake gameState.eaters
-            let snakeAteEater = getEaterEatenBySnake snake eaters
-            let (snake,newEaters) = 
-                match snakeAteEater with
-                | Some e -> (Snake.growUp snake, List.filter ((areEqualStructTuples e)>>not) eaters)
-                | None -> (snake, eaters)
+            let (snake,newEaters) = eatEaters(snake,eaters)
 
             let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
 
