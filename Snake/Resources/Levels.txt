@@ -159,3 +159,57 @@ X                                                X
 X                                                X
 X                                                X
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+###
+{
+  "snakeStart": {
+    "Item1": 4,
+    "Item2": 6
+  },
+  "eaters": [
+    {
+      "Item1": 15,
+      "Item2": 10
+    },
+    {
+      "Item1": 23,
+      "Item2": 6
+    }
+  ],
+  "perksTtl": 6,
+  "minimumWinLength": 8,
+  "exitPoint": {
+    "Item1": 49,
+    "Item2": 18
+  },
+  "perksMap": [
+    {
+      "Item1": "Attack",
+      "Item2": 15
+    },
+    {
+      "Item1": "Speed",
+      "Item2": 8
+    }
+  ]
+}
+@
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X                                                X
+X    XXXX   X   X  XXXXX   XXXX   X   X  XXXXX   X
+X       X   X   X  X   X      X   X   X  X   X   X
+X       X   X   X  X   X      X   X   X  X   X   X
+X    XXXX   XXXXX  X   X   XXXX   XXXXX  X   X   X
+X                                                X
+X                                                X
+X    XXXX   XXXXX  XXXXX    XXXX   X   X  XXXXX  X
+X       X   X   X  X   X       X   X   X  X   X  X
+X       X   X   X  X   X       X   X   X  X   X  X
+X    XXXX   X   X  X   X    XXXX   XXXXX  X   X  X
+X                                                X
+X                                                X
+X     XXXX   X   X  XXXXX   XXXX   XXXXX  XXXXX  X
+X        X   X   X  X   X      X   X   X  X   X  X
+X        X   X   X  X   X      X   X   X  X   X  X
+X     XXXX   XXXXX  X   X   XXXX   X   X  X   X  X
+X                                                X
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
