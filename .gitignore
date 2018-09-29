@@ -44,3 +44,4 @@ Packages/
 
 #Ignore test results
 test/results
+/Snake.Xamarin

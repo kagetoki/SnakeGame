@@ -5,8 +5,10 @@ open SneakySnake
 open PostOffice
 
 let buildGame startLevel =
-    let system = MailboxNetwork()
-    GameBuilder.buildSnakeGame system ConsoleUI.print startLevel
+    let system = new MailboxNetwork()
+    let game = GameBuilder.buildSnakeGame system startLevel
+    game.AddSubscriber ConsoleUI.print
+    game
 
 let rec readCommand (snakeMailboxSystem) =
     let commandAgent = snakeMailboxSystem.commandAgent

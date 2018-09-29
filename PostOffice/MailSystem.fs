@@ -1,6 +1,7 @@
 ﻿namespace PostOffice
 
 open System.Collections.Concurrent
+open System
 
 type Agent<'message,'state> =
     | Box of MailAgent<'message,'state>
@@ -13,11 +14,16 @@ type Agent<'message,'state> =
             match this with
             | Box b -> b.Kill()
             | DeadBox _ -> ()
+         interface IDisposable with
+            member this.Dispose() =
+                match this with
+                | Box agent -> agent.Dispose()
+                | DeadBox (_,agent) -> agent.Dispose()
 
 type MailboxNetwork() as this =
 
     [<DefaultValue>]
-    val mutable  agentRegister: ConcurrentDictionary<string, obj>
+    val mutable agentRegister: ConcurrentDictionary<string, obj>
     do this.agentRegister <- ConcurrentDictionary<string, obj>()
 
     let deadLettersFn deadLetters (address:string, msg:obj) =
@@ -44,4 +50,11 @@ type MailboxNetwork() as this =
     member this.RespawnBox (agent: MailAgent<'a,'b>) =
         this.KillBox agent.Address
         this.agentRegister.TryAdd (agent.Address, agent) |> ignore
+
+    interface IDisposable with
+        member this.Dispose() =
+                for agent in this.agentRegister.Values do
+                    match agent with
+                    | :? IDisposable as agent -> agent.Dispose()
+                    | _ -> ()
 

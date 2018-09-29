@@ -2,6 +2,7 @@ namespace SneakySnake
 
 open System
 open PostOffice
+open System.Collections.Concurrent
 
 type CommandMessage =
     | Cmd of Command
@@ -24,11 +25,18 @@ type TimerState =
 
 type SnakemailboxNetwork =
     {
+        subscribers: ConcurrentBag<(GameState -> unit)>
         commandAgent: Agent<CommandMessage, Command list>
         timerAgent: Agent<TimerCommand, TimerState>
         gameAgent: Agent<Command list, GameState>
         mailboxNetwork: MailboxNetwork
-    }
+    } with 
+        member this.Kill() =
+            this.commandAgent.Kill()
+            this.timerAgent.Kill()
+            this.gameAgent.Kill()
+        member this.AddSubscriber = this.subscribers.Add
+
 
 [<RequireQualifiedAccess>]
 module GameBuilder =
@@ -84,7 +92,11 @@ module GameBuilder =
                 commandAgent.Post Flush
             {state with delay = delay}
 
-    let buildSnakeGame (mailboxNetwork: MailboxNetwork) updateUi startLevel =
+    let buildSnakeGame (mailboxNetwork: MailboxNetwork) startLevel =
+        let subscribers = ConcurrentBag()
+        let updateUi gameState =
+            for sub in subscribers do
+                sub gameState
         let commandAgentFn = commandAgentFn mailboxNetwork
         let timerAgentFn = timerAgentFn mailboxNetwork
         let gameAgentFn = gameAgentFn mailboxNetwork updateUi
@@ -104,6 +116,7 @@ module GameBuilder =
         mailboxNetwork.RespawnBox timerAgent
         mailboxNetwork.RespawnBox gameAgent
         {
+            subscribers = subscribers
             commandAgent = Box commandAgent
             timerAgent = Box timerAgent
             gameAgent = Box gameAgent

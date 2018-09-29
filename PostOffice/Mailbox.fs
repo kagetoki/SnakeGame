@@ -1,6 +1,7 @@
 namespace PostOffice
 
 open Microsoft.FSharp.Control
+open System
 
 type Mail<'msg, 'state> =
     | Post of 'msg
@@ -11,7 +12,7 @@ module Mailbox =
 
     let buildAgent applyMessage zeroState =
         MailboxProcessor.Start(fun inbox ->
-        let rec loop (state: 'c) = async{
+        let rec loop state = async{
             let! msg = inbox.Receive()
             match msg with
             | Post msg ->
@@ -49,3 +50,8 @@ type MailAgent<'msg, 'state> = MailAgent of address:string * mailbox:MailboxProc
          member this.Address =
             let (MailAgent (address, _)) = this
             address
+         member this.Dispose() =
+            let (MailAgent (_, this)) = this
+            (this:>IDisposable).Dispose()
+         interface IDisposable with
+          member this.Dispose() = this.Dispose()
