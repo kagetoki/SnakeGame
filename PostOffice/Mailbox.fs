@@ -34,24 +34,19 @@ module Mailbox =
 
     let getStateAsync (agent: MailboxProcessor<_>) = agent.PostAndAsyncReply Get
 
-type MailAgent<'msg, 'state> = MailAgent of address:string * mailbox:MailboxProcessor<Mail<'msg, 'state>>
-    with member this.Post msg =
-            let (MailAgent (address,this)) = this
-            Mailbox.post this msg
-         member this.GetState() =
-            let (MailAgent (address,this)) = this
-            Mailbox.getState this
-         member this.GetStateAsync() =
-            let (MailAgent (address,this)) = this
-            Mailbox.getStateAsync this
-         member this.Kill() =
-            let (MailAgent (address,this)) = this
-            Mailbox.kill this
-         member this.Address =
-            let (MailAgent (address, _)) = this
-            address
-         member this.Dispose() =
-            let (MailAgent (_, this)) = this
-            (this:>IDisposable).Dispose()
-         interface IDisposable with
-          member this.Dispose() = this.Dispose()
+type MailAgent<'msg, 'state> =
+    { address:string
+      mailbox: MailboxProcessor<Mail<'msg, 'state>> }
+       with member this.Post msg =
+             Mailbox.post this.mailbox msg
+            member this.GetState() =
+                Mailbox.getState this.mailbox
+             member this.GetStateAsync() =
+                Mailbox.getStateAsync this.mailbox
+             member this.Kill() =
+                Mailbox.kill this.mailbox
+             member this.Dispose() =
+                (this.mailbox:>IDisposable).Dispose()
+             interface IDisposable with
+              member this.Dispose() = this.Dispose()
+

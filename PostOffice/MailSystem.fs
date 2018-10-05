@@ -34,8 +34,7 @@ type MailboxNetwork() as this =
             Map.remove address deadLetters
             |> Map.add address (msg::letters)
 
-    let deadLettersAgent() = ("deadLetters", Map.empty |> Mailbox.buildAgent deadLettersFn) |> MailAgent
-
+    let deadLettersAgent() = {address = "deadLetters"; mailbox = Map.empty |> Mailbox.buildAgent deadLettersFn}
     member this.DeadLetters = deadLettersAgent()
     member this.Box<'message,'state>(address) =
         match this.agentRegister.TryGetValue address with
@@ -48,8 +47,8 @@ type MailboxNetwork() as this =
         this.agentRegister.TryRemove(address) |> ignore
     
     member this.RespawnBox (agent: MailAgent<'a,'b>) =
-        this.KillBox agent.Address
-        this.agentRegister.TryAdd (agent.Address, agent) |> ignore
+        this.KillBox agent.address
+        this.agentRegister.TryAdd (agent.address, agent) |> ignore
 
     interface IDisposable with
         member this.Dispose() =

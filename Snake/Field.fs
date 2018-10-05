@@ -77,13 +77,6 @@ module Field =
             | Some cell -> cell
         Array2D.init width height mapCell
 
-    let nextFrame (field:field) fieldUpdates =
-        let isCellInside cell = isPointInside struct(field.width, field.height) struct(cell.x, cell.y)
-        let fieldUpdates = Seq.filter isCellInside fieldUpdates
-        for cell in fieldUpdates do
-            field.cellMap.[cell.x,cell.y] <- cell
-        field
-
     let private getRandomCoordinate width height =
         struct (random.Next(1, width - 2), random.Next(1, height - 2))
 
@@ -103,29 +96,3 @@ module Field =
             field.cellMap.[cell.x, cell.y] <- {cell with content = Exit}
             {field with isExitOpen = true}
 
-    let getStartField perks eaters =
-        let width = 50
-        let height = 20
-        let cells = 
-            [
-                for x in 14..23 do yield {x = x; y = 9; content = Obstacle}
-                for x in 26..36 do yield {x = x; y = 9; content = Obstacle}
-                for y in 4..15 do yield {x = 13; y = y; content = Obstacle}
-                for y in 4..15 do yield {x = 37; y = y; content = Obstacle}
-            ] |> List.map (fun c -> (struct(c.x, c.y),c)) |> Map.ofList
-        let field =
-            {
-                width = width;
-                height = height;
-                snakeStart = struct(4,5)
-                eaters = eaters
-                perksTtl = 4us
-                exitPoint = struct(width - 1, height - 10)
-                perksAvailabilityMap = perks |> Map.ofList
-                minimumWinLength = 15us
-                cellMap = init width height cells
-                isExitOpen = false
-            }
-        for i in 0..4 do
-            spawnFoodInRandomCell field
-        field
