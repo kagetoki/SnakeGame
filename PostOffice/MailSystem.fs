@@ -12,7 +12,7 @@ type Agent<'message,'state> =
             | DeadBox (address, deadbox) -> (address, box msg) |> deadbox.Post
          member this.Kill() =
             match this with
-            | Box b -> b.Kill()
+            | Box b -> b.Kill(); b.Dispose()
             | DeadBox _ -> ()
          interface IDisposable with
             member this.Dispose() =

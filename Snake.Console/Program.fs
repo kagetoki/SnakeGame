@@ -10,57 +10,33 @@ let buildGame startLevel =
     game.AddSubscriber ConsoleUI.print
     game
 
-let rec readCommand (snakeMailboxSystem) =
-    let commandAgent = snakeMailboxSystem.commandAgent
+let readUserCommand key =
+    match key with
+    | ConsoleKey.A -> Add Attack |> Perk |> SnakeCommand |> Some
+    | ConsoleKey.R -> Restart |> Some
+    | ConsoleKey.S -> Add Speed |> Perk |> SnakeCommand |> Some
+    | ConsoleKey.DownArrow -> Move Down |> SnakeCommand |> Some
+    | ConsoleKey.UpArrow -> Move Up |> SnakeCommand |> Some
+    | ConsoleKey.LeftArrow -> Move Left |> SnakeCommand |> Some
+    | ConsoleKey.RightArrow -> Move Right |> SnakeCommand |> Some
+    | ConsoleKey.Q -> Quit |> Some
+    | ConsoleKey.Spacebar -> StartPause |> Some
+    | _ -> None
+
+let rec read snakeMailboxSystem =
     let input = Console.ReadKey()
-    let perkCommand = 
-        if input.Modifiers.HasFlag ConsoleModifiers.Shift
-        then Remove
-        else Add
-    match input.Key with
-    | ConsoleKey.Q -> 
-        snakeMailboxSystem.gameAgent.Kill()
-        snakeMailboxSystem.commandAgent.Kill()
-    | ConsoleKey.A ->
-        perkCommand Attack |> Perk |> Cmd
-        |> commandAgent.Post
-        readCommand snakeMailboxSystem
-    | ConsoleKey.S ->
-        perkCommand Speed |> Perk |> Cmd
-        |> commandAgent.Post
-        readCommand snakeMailboxSystem
-    | ConsoleKey.UpArrow ->
-        Move Up |> Cmd |> commandAgent.Post
-        readCommand snakeMailboxSystem
-    | ConsoleKey.DownArrow ->
-        Move Down |> Cmd |> commandAgent.Post
-        readCommand snakeMailboxSystem
-    | ConsoleKey.LeftArrow ->
-        Move Left |> Cmd |> commandAgent.Post
-        readCommand snakeMailboxSystem
-    | ConsoleKey.RightArrow ->
-        Move Right |> Cmd |> commandAgent.Post
-        readCommand snakeMailboxSystem
-    | ConsoleKey.R -> 
-        let startLevel =
-            match snakeMailboxSystem.gameAgent with
-            | Box m ->
-                m.GetState().startLevel
-            | _ -> 0
-        commandAgent.Kill()
-        snakeMailboxSystem.gameAgent.Kill()
-        let newSystem = buildGame startLevel
-        newSystem.timerAgent.Post Start
-        readCommand newSystem
-    | ConsoleKey.Spacebar -> 
-        snakeMailboxSystem.timerAgent.Post PauseOrResume
-        readCommand snakeMailboxSystem
-    | _ -> readCommand snakeMailboxSystem
+    let command = readUserCommand input.Key
+    match command with
+    | None -> read snakeMailboxSystem
+    | Some Quit -> ()
+    | Some cmd ->
+        let game = GameInterface.passCommand ConsoleUI.print snakeMailboxSystem cmd
+        read game
 
 [<EntryPoint>]
 let main argv =
     let gameSystem = buildGame 0
     ConsoleUI.printHelp()
     gameSystem.timerAgent.Post Start
-    readCommand gameSystem
+    read gameSystem
     0 // return an integer exit code

@@ -5,7 +5,7 @@ open PostOffice
 open System.Collections.Concurrent
 
 type CommandMessage =
-    | Cmd of Command
+    | AppendCommand of Command
     | Flush
 
 [<Struct>]
@@ -67,7 +67,7 @@ module GameBuilder =
     let commandAgentFn (mailboxNetwork: MailboxNetwork) commands msg =
         let gameAgent = gameAgent mailboxNetwork
         match msg with
-        | Cmd cmd -> cmd::commands
+        | AppendCommand cmd -> cmd::commands
         | Flush ->
             commands |> gameAgent.Post
             []
