@@ -15,13 +15,15 @@ type SnakePerk =
     | Speed
     | Attack
 
+[<Struct>]
 type PerkCommand =
-    | Add of SnakePerk
-    | Remove of SnakePerk
+    | Add of add:SnakePerk
+    | Remove of remove:SnakePerk
 
+[<Struct>]
 type Command =
-    | Move of Direction
-    | Perk of PerkCommand
+    | Move of move:Direction
+    | Perk of perk:PerkCommand
 
 type SnakeBody =
     | Segment of direction: Direction * length: uint16 * next: SnakeBody

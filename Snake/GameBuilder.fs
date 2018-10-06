@@ -5,7 +5,7 @@ open PostOffice
 open System.Collections.Concurrent
 
 type CommandMessage =
-    | Cmd of Command
+    | AppendCommand of Command
     | Flush
 
 [<Struct>]
@@ -67,7 +67,7 @@ module GameBuilder =
     let commandAgentFn (mailboxNetwork: MailboxNetwork) commands msg =
         let gameAgent = gameAgent mailboxNetwork
         match msg with
-        | Cmd cmd -> cmd::commands
+        | AppendCommand cmd -> cmd::commands
         | Flush ->
             commands |> gameAgent.Post
             []
@@ -101,8 +101,8 @@ module GameBuilder =
         let timerAgentFn = timerAgentFn mailboxNetwork
         let gameAgentFn = gameAgentFn mailboxNetwork updateUi
 
-        let commandAgent = (commandAddress, []|> Mailbox.buildAgent commandAgentFn) |> MailAgent 
-        let timerAgent = (timerAddress, {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn) |> MailAgent
+        let commandAgent = { address = commandAddress; mailbox = []|> Mailbox.buildAgent commandAgentFn} 
+        let timerAgent = {address = timerAddress; mailbox = {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn}
         let levels = LevelSource.loadAllLevels() |> List.ofArray |> List.skip startLevel
         let zeroState =
             { gameFrame = Frame levels.Head;
@@ -110,8 +110,7 @@ module GameBuilder =
               eaters = levels.Head.eaters |> List.ofSeq 
               startLevel = startLevel
               nextLevels = levels.Tail }
-        let gameAgent = (gameAddress, zeroState |> Mailbox.buildAgent gameAgentFn) |> MailAgent
-
+        let gameAgent = {address = gameAddress; mailbox = zeroState |> Mailbox.buildAgent gameAgentFn}
         mailboxNetwork.RespawnBox commandAgent
         mailboxNetwork.RespawnBox timerAgent
         mailboxNetwork.RespawnBox gameAgent
