@@ -145,9 +145,9 @@ module Game =
         | Frame field ->
             let field = openExitIfNeeded field gameState.snake
             let commands = filterCommands field gameState.snake commands
-            let snake = commands |> Snake.applyCommands gameState.snake |> Snake.tick
-            let eaters = getNextEatersStep field snake gameState.eaters
-            let (snake,newEaters) = eatEaters(snake,eaters)
+            let tickedSnake = commands |> Snake.applyCommands gameState.snake |> Snake.tick
+            let eaters = getNextEatersStep field tickedSnake gameState.eaters
+            let (snake,newEaters) = eatEaters(tickedSnake,eaters)
 
             let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
 
@@ -165,7 +165,7 @@ module Game =
                     { gameState with  gameFrame = Loss "snake crossed obstacle" |> End; snake = snake ; eaters = newEaters }
                 | Empty | SnakeCell | Exit ->
                     updateCellMap snakeCoordinates |> nextFrame snake
-                | Food -> 
+                | Food ->
                     let snake = Snake.growUp snake
                     let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
                     Field.spawnFoodInRandomCell field

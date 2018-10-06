@@ -28,10 +28,11 @@ module Body =
 
     let tick direction = tickHead direction >> tickTail
 
-    let grow =
+    let rec grow =
         function
         | Tail -> Tail
-        | Segment(dir, len, next) -> Segment(dir, len + 1us, next)
+        | Segment(dir, len, Tail) -> Segment(dir, len + 1us, Tail)
+        | Segment(dir, len, next) -> Segment(dir, len, grow next)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
@@ -117,5 +118,4 @@ module Snake =
         { snake with
                 length = snake.length + 1us;
                 body = Body.grow snake.body;
-                headPoint = Field.nextCoordinate snake.direction snake.headPoint
         }

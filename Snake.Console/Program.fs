@@ -23,12 +23,12 @@ let readUserCommand key =
     | ConsoleKey.Spacebar -> StartPause |> Some
     | _ -> None
 
-let rec read snakeMailboxSystem =
+let rec read (snakeMailboxSystem:SnakemailboxNetwork) =
     let input = Console.ReadKey()
     let command = readUserCommand input.Key
     match command with
     | None -> read snakeMailboxSystem
-    | Some Quit -> ()
+    | Some Quit -> snakeMailboxSystem.Kill()
     | Some cmd ->
         let game = GameInterface.passCommand ConsoleUI.print snakeMailboxSystem cmd
         read game
