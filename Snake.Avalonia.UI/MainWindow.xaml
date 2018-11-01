@@ -1,0 +1,20 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Snake.Avalonia.UI"
+        SizeToContent="WidthAndHeight">
+  <StackPanel x:Name="LayoutGrid" >
+    <StackPanel Orientation="Horizontal" Height="50" VerticalAlignment="Top" HorizontalAlignment="Center" Background="Green">
+      <StackPanel HorizontalAlignment="Stretch" Background="Gray">
+        <TextBlock x:Name="SpeedTxt"  HorizontalAlignment="Left" TextAlignment="Left" Background="Yellow"></TextBlock>
+        <TextBlock x:Name="AttackTxt" HorizontalAlignment="Left" TextAlignment="Left" Background="Pink"></TextBlock>
+      </StackPanel>
+      <StackPanel HorizontalAlignment="Stretch" Background="Black">
+        <TextBlock x:Name="ScoreTxt"  HorizontalAlignment="Right"  TextAlignment="Right" Background="Brown"></TextBlock>
+        <TextBlock x:Name="ExitTxt"  HorizontalAlignment="Right" TextAlignment="Right" Background="Blue"></TextBlock>
+      </StackPanel>
+    </StackPanel>
+    <Grid x:Name="FieldGrid" VerticalAlignment="Bottom">
+
+    </Grid>
+  </StackPanel>
+</Window>

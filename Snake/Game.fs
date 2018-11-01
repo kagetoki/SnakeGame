@@ -16,7 +16,22 @@ type GameState =
         eaters: struct(int*int) list
         nextLevels: field list
         startLevel: int
-    }
+    } with
+        member x.PerkAvailableAfter perk =
+            match x.gameFrame with
+            | Frame field ->
+                match field.perksAvailabilityMap.TryFind perk with
+                | None -> 0us
+                | Some t -> if t > x.snake.length then t - x.snake.length else 0us
+            | _ -> 0us
+        member x.ExitOpensAfter() =
+            match x.gameFrame with
+            | Frame field ->
+                if field.minimumWinLength > x.snake.length
+                then field.minimumWinLength - x.snake.length
+                else 0us
+            | _ -> 0us
+
 
 [<RequireQualifiedAccess>]
 module Game =
@@ -172,7 +187,7 @@ module Game =
                     Field.spawnFoodInRandomCell field
                     updateCellMap snakeCoordinates |> nextFrame snake
                 | Eater ->
-                    let snake = Snake.growUp snake
+                    let snake = untickedSnake |> (Snake.growUp >> Snake.tick)
                     let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
                     let aliveEaters = List.filter ((areEqualStructTuples snake.headPoint)>>not) newEaters
                     { gameState with 

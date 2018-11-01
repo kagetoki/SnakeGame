@@ -14,7 +14,8 @@ type TimerCommand =
     | Next
     | PauseOrResume
     | Stop
-    | SetDelay of int
+    | IncreaseDelay of increase:int
+    | SetDelay of set:int
 
 [<Struct>]
 type TimerState =
@@ -23,7 +24,7 @@ type TimerState =
         delay: int
     }
 
-type SnakemailboxNetwork =
+type SnakeMailboxNetwork =
     {
         subscribers: ConcurrentBag<(GameState -> unit)>
         commandAgent: Agent<CommandMessage, Command list>
@@ -35,7 +36,10 @@ type SnakemailboxNetwork =
             this.commandAgent.Kill()
             this.timerAgent.Kill()
             this.gameAgent.Kill()
-        member this.AddSubscriber = this.subscribers.Add
+        member this.AddSubscriber s = this.subscribers.Add s
+        member this.AddSubscriberInterop (action: Action<GameState>) =
+            let sub gameState = action.Invoke(gameState)
+            this.subscribers.Add sub
 
 
 [<RequireQualifiedAccess>]
@@ -57,7 +61,8 @@ module GameBuilder =
             timerAgent.Post Next
             updateUi gameState
             gameState
-        | End (Win _) ->
+        | End (Win points) ->
+            printfn "Win %i" points
             timerAgent.Post PauseOrResume
             Game.updateGameState gameState cmd
         | _ -> 
@@ -82,6 +87,10 @@ module GameBuilder =
                 commandAgent.Post Flush; 
             state
         | Stop -> printfn "Stop received"; { state with active = false }
+        | IncreaseDelay increase -> 
+            match state.delay + increase with
+            | negative when negative <= 0 -> { state with delay = 0}
+            | delay -> { state with delay = delay }
         | PauseOrResume -> 
             if not state.active then
                 commandAgent.Post Flush
@@ -102,7 +111,7 @@ module GameBuilder =
         let gameAgentFn = gameAgentFn mailboxNetwork updateUi
 
         let commandAgent = { address = commandAddress; mailbox = []|> Mailbox.buildAgent commandAgentFn} 
-        let timerAgent = {address = timerAddress; mailbox = {active=false; delay = 200} |> Mailbox.buildAgent timerAgentFn}
+        let timerAgent = {address = timerAddress; mailbox = {active=false; delay = 250} |> Mailbox.buildAgent timerAgentFn}
         let levels = LevelSource.loadAllLevels() |> List.ofArray |> List.skip startLevel
         let zeroState =
             { gameFrame = Frame levels.Head;

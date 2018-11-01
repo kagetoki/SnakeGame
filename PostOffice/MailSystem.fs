@@ -14,6 +14,10 @@ type Agent<'message,'state> =
             match this with
             | Box b -> b.Kill(); b.Dispose()
             | DeadBox _ -> ()
+         member this.GetState() =
+            match this with
+            | Box b -> b.GetState() |> Some
+            | _ -> None
          interface IDisposable with
             member this.Dispose() =
                 match this with

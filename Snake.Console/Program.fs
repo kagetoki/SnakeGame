@@ -10,33 +10,20 @@ let buildGame startLevel =
     game.AddSubscriber ConsoleUI.print
     game
 
-let readUserCommand key =
-    match key with
-    | ConsoleKey.A -> Add Attack |> Perk |> SnakeCommand |> Some
-    | ConsoleKey.R -> Restart |> Some
-    | ConsoleKey.S -> Add Speed |> Perk |> SnakeCommand |> Some
-    | ConsoleKey.DownArrow -> Move Down |> SnakeCommand |> Some
-    | ConsoleKey.UpArrow -> Move Up |> SnakeCommand |> Some
-    | ConsoleKey.LeftArrow -> Move Left |> SnakeCommand |> Some
-    | ConsoleKey.RightArrow -> Move Right |> SnakeCommand |> Some
-    | ConsoleKey.Q -> Quit |> Some
-    | ConsoleKey.Spacebar -> StartPause |> Some
-    | _ -> None
-
-let rec read (snakeMailboxSystem:SnakemailboxNetwork) =
+let rec executeUserCommand (snakeMailboxSystem:SnakeMailboxNetwork) =
     let input = Console.ReadKey()
-    let command = readUserCommand input.Key
+    let command = GameInterface.readUserCommand input.Key
     match command with
-    | None -> read snakeMailboxSystem
+    | None -> executeUserCommand snakeMailboxSystem
     | Some Quit -> snakeMailboxSystem.Kill()
     | Some cmd ->
         let game = GameInterface.passCommand ConsoleUI.print snakeMailboxSystem cmd
-        read game
+        executeUserCommand game
 
 [<EntryPoint>]
 let main argv =
     let gameSystem = buildGame 0
     ConsoleUI.printHelp()
     gameSystem.timerAgent.Post Start
-    read gameSystem
+    executeUserCommand gameSystem
     0 // return an integer exit code
