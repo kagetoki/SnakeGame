@@ -106,22 +106,20 @@ module Game =
             | _ -> true
         List.filter predicate commands
 
-    let private openExitIfNeeded field snake =
-        if not field.isExitOpen && snake.length >= field.minimumWinLength
-        then Field.openExit field
-        else field
+    let private shouldOpenExit field snake =
+        not field.isExitOpen && snake.length >= field.minimumWinLength
 
     let private tryEndGame field snakeCoordinates eaters =
         let isPointOutside p = Field.isPointInside struct(field.width, field.height) p |> not
         let isSnakeOutside = List.fold (fun acc point -> acc && isPointOutside point) true snakeCoordinates
         if isSnakeOutside
-        then Seq.length snakeCoordinates |> uint16 |> Win |> Some
+            then Seq.length snakeCoordinates |> uint16 |> Win |> Some
         elif isSnakeCrossingItself snakeCoordinates
-        then Loss "snake bit itself" |> Some
+            then Loss "snake bit itself" |> Some
         elif isSnakeCrossedObstacle field snakeCoordinates
-        then Loss "snake hit obstacle" |> Some
+            then Loss "snake hit obstacle" |> Some
         elif isEatersWin snakeCoordinates eaters
-        then Loss "eater ate your snake" |> Some
+            then Loss "eater ate your snake" |> Some
         else None
 
     let rec private eatEaters (snake,eaters) =
@@ -143,7 +141,10 @@ module Game =
                 eaters = next.eaters |> List.ofSeq }
         | End _ -> gameState
         | Frame field ->
-            let field = openExitIfNeeded field gameState.snake
+            let field =
+                if shouldOpenExit field gameState.snake
+                then Field.openExit field
+                else field
             let commands = filterCommands field gameState.snake commands
             let untickedSnake = commands |> Snake.applyCommands gameState.snake
             let tickedSnake = untickedSnake |> Snake.tick
@@ -157,25 +158,25 @@ module Game =
             match tryEndGame field snakeCoordinates newEaters with
             | Some result -> {gameState with gameFrame = End result}
             | None ->
-            let nextFrame snake field = { gameState with gameFrame = Frame field; snake = snake; eaters = newEaters }
-            match field.TryGetCell snake.headPoint with
-            | None -> updateCellMap snakeCoordinates |> nextFrame snake
-            | Some cell ->
-                match cell.content with
-                | Obstacle ->
-                    { gameState with  gameFrame = Loss "snake crossed obstacle" |> End; snake = snake ; eaters = newEaters }
-                | Empty | SnakeCell | Exit ->
-                    updateCellMap snakeCoordinates |> nextFrame snake
-                | Food ->
-                    let snake = untickedSnake |> (Snake.growUp >> Snake.tick)
-                    let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
-                    Field.spawnFoodInRandomCell field
-                    updateCellMap snakeCoordinates |> nextFrame snake
-                | Eater ->
-                    let snake = Snake.growUp snake
-                    let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
-                    let aliveEaters = List.filter ((areEqualStructTuples snake.headPoint)>>not) newEaters
-                    { gameState with 
-                          gameFrame = updateCellMap snakeCoordinates |> Frame; 
-                          snake = snake; 
-                          eaters = aliveEaters }
+                let nextFrame snake field = { gameState with gameFrame = Frame field; snake = snake; eaters = newEaters }
+                match field.TryGetCell snake.headPoint with
+                | None -> updateCellMap snakeCoordinates |> nextFrame snake
+                | Some cell ->
+                    match cell.content with
+                    | Obstacle ->
+                        { gameState with  gameFrame = Loss "snake crossed obstacle" |> End; snake = snake ; eaters = newEaters }
+                    | Empty | SnakeCell | Exit ->
+                        updateCellMap snakeCoordinates |> nextFrame snake
+                    | Food ->
+                        let snake = untickedSnake |> (Snake.growUp >> Snake.tick)
+                        let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
+                        Field.spawnFoodInRandomCell field
+                        updateCellMap snakeCoordinates |> nextFrame snake
+                    | Eater ->
+                        let snake = Snake.growUp snake
+                        let snakeCoordinates = Field.getSnakeCoordinates snake.body snake.headPoint
+                        let aliveEaters = List.filter ((areEqualStructTuples snake.headPoint)>>not) newEaters
+                        { gameState with 
+                                gameFrame = updateCellMap snakeCoordinates |> Frame; 
+                                snake = snake;
+                                eaters = aliveEaters }

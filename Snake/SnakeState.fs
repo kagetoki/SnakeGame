@@ -45,7 +45,7 @@ module Snake =
           perks = Map.empty;
           length = 3us;
           headPoint = struct(i,j)
-          body = Segment (Right, 2us, Tail)}
+          body = Segment (Right, 2us, Tail) }
 
     let tick snake =
         let downTick t = if t > 0us then t - 1us else 0us

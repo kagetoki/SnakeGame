@@ -41,21 +41,31 @@ type SnakeState =
         length: uint16
         headPoint: struct(int*int)
         body: SnakeBody
-    } with member this.HasPerk perk = 
-            match Map.tryFind perk this.perks with
-            | None -> false
-            | Some perkState ->
-                match perkState with
-                | Active ticks -> ticks > 0us
-                | Cooldown _ -> false
+    } 
 
-           member this.CanApply perk =
-            match Map.tryFind perk this.perks with
-            | None -> true
-            | Some perkState ->
-                match perkState with
-                | Cooldown 0us -> true
-                | _ -> false
+[<AutoOpen>]
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module SnakeState =
+    let private perkF snake noPerkResult f perk =
+        match Map.tryFind perk snake.perks with
+        | None -> noPerkResult
+        | Some perk -> f perk
+
+    let isPerkActive = function
+        | Active ticks -> ticks > 0us
+        | _ -> false
+
+    let isCooldownReady = function
+        | Cooldown 0us -> true
+        | _ -> false
+
+    let hasPerk snake = perkF snake false isPerkActive
+
+    let canApply snake = perkF snake true isCooldownReady
+
+    type SnakeState with
+        member this.CanApply perk = canApply this perk
+        member this.HasPerk perk = hasPerk this perk
 
 [<AutoOpen>]
 module CollectionUtils =
